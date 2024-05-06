@@ -3,7 +3,6 @@
 
 int main(int argc, char* argv[])
 {
-    // printHexFileContents(argv[1]);
     parseInstructionsFromFile(argv[1]);
 
     return 0;
@@ -26,8 +25,6 @@ void parseVariableOpcode(uint16_t instruction)
     uint16_t address;        // holds NNN from opcode (an address between 0 and 4095)
     uint8_t registerX;       // holds X from opcode (a register 0-F)
     uint8_t registerY;       // holds Y from opcode (a register 0-F)
-
-
 
     // Parse the opcode into potential register, number, or address variables.
     // Sometimes they will be unused or invalid, but it helps keep the switch
@@ -121,30 +118,6 @@ void parseInstructionsFromFile(char* filename)
         uint16_t swapped = (instruction >> 8) | (instruction << 8);
         printf("%X ", swapped);
         parseOpcode(swapped);
-    }
-    printf("\n");
-
-    fclose(fptr);
-}
-
-/**
- * @brief Helper function to print the contents of the input ROM file in chunks
- *        of 4 hex digits (e.g. "4E12 ACEA EAAA AEAA A0E0").
- * @param filename Path to the input ROM file.
- */
-void printHexFileContents(char* filename)
-{
-    FILE* fptr = fopen(filename, "r");
-    if (fptr == NULL)
-    {
-        printf("Failed to open input file.\n");
-        return -1;
-    }
-
-    uint16_t instruction;
-    while (fread(&instruction, sizeof(instruction), 1, fptr) == 1)
-    {
-        printf("%X ", instruction);
     }
     printf("\n");
 
