@@ -157,7 +157,9 @@ void parseInstructionsFromFile(char* filename)
     uint16_t instruction;
     while (fread(&instruction, sizeof(instruction), 1, fptr) == 1)
     {
-        parseOpcode(instruction);
+        // swap for endianness?
+        uint16_t swapped = (instruction >> 8) | (instruction << 8);
+        parseOpcode(swapped);
     }
     printf("\n");
 
