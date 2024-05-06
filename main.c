@@ -111,12 +111,18 @@ void parseInstructionsFromFile(char* filename)
         return -1;
     }
 
+    // instructions start at address 0x200
+    uint16_t memAddrOfInstruction = 0x200;
+
     uint16_t instruction;
     while (fread(&instruction, sizeof(instruction), 1, fptr) == 1)
     {
-        // swap for endianness?
+        // swap for endianness
         uint16_t swapped = (instruction >> 8) | (instruction << 8);
-        printf("%X ", swapped);
+
+        // instructions start at address 0x200
+        printf("%X %X ", memAddrOfInstruction, swapped);
+        memAddrOfInstruction += 2;
         parseOpcode(swapped);
     }
     printf("\n");
