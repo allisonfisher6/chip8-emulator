@@ -27,7 +27,7 @@ void parseVariableOpcode(uint16_t instruction)
     uint8_t registerX;       // holds X from opcode (a register 0-F)
     uint8_t registerY;       // holds Y from opcode (a register 0-F)
 
-    printf("%X ", instruction);
+
 
     // Parse the opcode into potential register, number, or address variables.
     // Sometimes they will be unused or invalid, but it helps keep the switch
@@ -52,18 +52,19 @@ void parseVariableOpcode(uint16_t instruction)
         case 0x07: printf("v%x += %X\n", registerX, twoDigitNumber); break;
         case 0x08:
         {
-            char* operand = "   ";
+            char* operand = "<op>";
             switch(instruction & 0x000f)
             {
                 case 0x0000: operand = ":="; break;
-                case 0x0001: operand = "&="; break;
+                case 0x0001: operand = "|="; break;
+                case 0x0002: operand = "&="; break;
                 case 0x0003: operand = "^="; break;
                 case 0x0004: operand = "+="; break;
                 case 0x0005: operand = "-="; break;
                 case 0x0006: operand = ">>="; break;
                 case 0x0007: operand = "=-"; break;
                 case 0x000e: operand = "<<="; break;
-                default: printf("Invalid opcode\n");
+                default: printf("Invalid opcode "); break;
             }
             printf("v%x %s v%x\n", registerX, operand, registerY);
             break;
@@ -85,25 +86,22 @@ void parseVariableOpcode(uint16_t instruction)
         }
         case 0x0f:
         {
-            // @TODO finish formatting
-            uint8_t registerX = instruction & 0x0f00;
-            printf("Register x = %X\n", registerX);
             switch(instruction & 0x00ff)
             {
-            case 0x0007: printf("vx := delay\n"); break;
-            case 0x000a: printf("vx := key\n"); break;
-            case 0x0015: printf("delay := vx\n"); break;
-            case 0x0018: printf("buzzer := vx\n"); break;
-            case 0x001e: printf("i += vx\n"); break;
-            case 0x0029: printf("i := hex vx\n"); break;
-            case 0x0033: printf("bcd vx"); break;
-            case 0x0055: printf("save vx"); break;
-            case 0x0065: printf("load vx"); break;
-            default: printf("Invalid opcode %X\n", instruction);
+                case 0x0007: printf("v%x := delay\n", registerX); break;
+                case 0x000a: printf("v%x := key\n", registerX); break;
+                case 0x0015: printf("delay := v%x\n", registerX); break;
+                case 0x0018: printf("buzzer := v%x\n", registerX); break;
+                case 0x001e: printf("i += v%x\n", registerX); break;
+                case 0x0029: printf("i := hex v%x\n", registerX); break;
+                case 0x0033: printf("bcd v%x\n", registerX); break;
+                case 0x0055: printf("save v%x\n", registerX); break;
+                case 0x0065: printf("load v%x\n", registerX); break;
+                default: printf("Invalid opcode\n"); break;
             }
             break;
         }
-        default: printf("Invalid opcode\n");
+        default: printf("Invalid opcode\n"); break;
     }
 }
 
@@ -121,6 +119,7 @@ void parseInstructionsFromFile(char* filename)
     {
         // swap for endianness?
         uint16_t swapped = (instruction >> 8) | (instruction << 8);
+        printf("%X ", swapped);
         parseOpcode(swapped);
     }
     printf("\n");
