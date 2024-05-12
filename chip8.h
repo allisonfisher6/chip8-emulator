@@ -34,8 +34,9 @@ struct chip8{
  * portion of the memory map.
  * @param filename File to read.
  * @param programMem Pointer to the program portion of the memory map.
+ * @return Number of instructions or -1 if there was an error.
  */
-int8_t readInstructionsFromFile(char* filename, uint16_t *programMem);
+int16_t readInstructionsFromFile(char* filename, uint16_t *programMem);
 
 /**
  * @brief Clears the display contents by setting all pixels to 0.
@@ -52,5 +53,31 @@ void clearDisplay(uint8_t *display);
  * @param cols Number of columns in display (X-axis)
  */
 void printDisplayBits(uint8_t *data, uint8_t rows, uint8_t cols);
+
+/**
+ * @brief Draws a sprite at provided x and y coordinates that has a width of 8
+ * pixels and passed in height. VF is set to 1 if any sceen pixels are flipped
+ * from set to unset when the sprite is draw and 0 if it does not happen.
+ * @param display Pointer to display data.
+ * @param pixelsToDraw Pointer to pixel data in memory.
+ * @param xpos Position on x-axis to draw the sprite.
+ * @param ypos Position on y-axis to draw the sprite.
+ * @param height Pixel height of the sprite.
+ */
+void drawSprite(uint8_t *display, uint8_t *pixelsToDraw,
+                uint8_t xpos, uint8_t ypos, uint8_t height);
+
+/**
+ * @brief Translates instruction into the CHIP-8 opcode it represents.
+ * @param instruction Instruction to process.
+ */
+void parseOpcode(uint16_t instruction);
+
+/**
+ * @brief Translates instructions that contain variables for address, VX, VY,
+ * or a number.
+ * @param instruction Instruction to process.
+ */
+void parseVariableOpcode(uint16_t instruction);
 
 #endif // CHIP8_H
