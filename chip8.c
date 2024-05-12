@@ -1,8 +1,9 @@
 #include "chip8.h"
 
 struct chip8 chip8Mem;
+uint16_t numInstructions;
 
-int16_t readInstructionsFromFile(char* filename, uint16_t *programMem)
+int8_t readInstructionsFromFile(char* filename)
 {
     FILE* fptr = fopen(filename, "r");
     if (fptr == NULL)
@@ -12,10 +13,10 @@ int16_t readInstructionsFromFile(char* filename, uint16_t *programMem)
     }
 
     fseek(fptr, sizeof(uint16_t), SEEK_END);
-    uint16_t numInstructionsInFile = (ftell(fptr) / 2) - 1;
+    numInstructions = (ftell(fptr) / 2) - 1;
     fseek(fptr, 0, SEEK_SET);
 
-    if(numInstructionsInFile <= (PROGRAM_SIZE_BYTES / 2))
+    if(numInstructions <= (PROGRAM_SIZE_BYTES / 2))
     {
         uint16_t instruction;
         uint16_t instructionIndex = 0;
@@ -23,7 +24,7 @@ int16_t readInstructionsFromFile(char* filename, uint16_t *programMem)
         {
             // swap for endianness
             uint16_t swapped = (instruction >> 8) | (instruction << 8);
-            programMem[instructionIndex] = swapped;
+            chip8Mem.program[instructionIndex] = swapped;
             instructionIndex++;
         }
         printf("\n");
@@ -35,30 +36,29 @@ int16_t readInstructionsFromFile(char* filename, uint16_t *programMem)
     }
 
     fclose(fptr);
-    return numInstructionsInFile;
+    return 0;
 }
 
-void clearDisplay(uint8_t *display)
+void clearDisplay()
 {
-    memset(display, 0x00, DISPLAY_SIZE_BYTES);
+    memset(chip8Mem.display, 0x00, DISPLAY_SIZE_BYTES);
 }
 
-void printDisplayBits(uint8_t *data, uint8_t rows, uint8_t cols)
+void printDisplayBits(uint8_t rows, uint8_t cols)
 {
     printf("----------------\n");
     for(uint8_t row = 0; row < rows; row++)
     {
         for(int i = (cols - 1); i >= 0; i--)
         {
-            printf("%d ", (data[row] >> i) & 1);
+            printf("%d ", (chip8Mem.display[row] >> i) & 1);
         }
         printf("\n");
     }
     printf("---------------\n");
 }
 
-void drawSprite(uint8_t *display, uint8_t *pixelsToDraw,
-                uint8_t xpos, uint8_t ypos, uint8_t height)
+void drawSprite(uint8_t *pixelsToDraw, uint8_t xpos, uint8_t ypos, uint8_t height)
 {
     // TODO implement
 }
@@ -154,5 +154,24 @@ void parseVariableOpcode(uint16_t instruction)
         break;
     }
     default: printf("Invalid opcode\n"); break;
+    }
+}
+
+uint16_t getMemOffset(uint8_t* address)
+{
+    // printf("CHIP8 Mem start: %p\n", &chip8Mem);
+    // printf("Address %p\n", address);
+    uint16_t diff = address - (uint8_t*) &chip8Mem;
+    // printf("Diff: %X\n", diff);
+    return diff;
+}
+
+void printDisassembly()
+{
+    for (uint16_t i = 0; i < numInstructions; i++)
+    {
+        uint16_t instructionAddress = getMemOffset((uint8_t*) &chip8Mem.program + (sizeof(i) * i));
+        printf("%X %X ", chip8Mem.program[i], instructionAddress);
+        parseOpcode(chip8Mem.program[i]);
     }
 }
