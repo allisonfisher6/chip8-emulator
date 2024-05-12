@@ -13,12 +13,14 @@ int main(int argc, char* argv[])
 
     // begin with a clear display
     clearDisplay();
-    printDisplayBits(32, 64);
+    // printDisplayBits(32, 64);
 
     // print disassembly
     printDisassembly();
 
+
     // TODO begin processing instructions
+    runProgram();
     // TODO find library to handle graphics
     // TODO handle keyboard input
 

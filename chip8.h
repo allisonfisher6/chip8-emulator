@@ -30,6 +30,8 @@ struct chip8{
 };
 
 extern uint16_t numInstructions;
+extern uint16_t currentInstruction;
+extern int8_t run;
 
 /**
  * @brief The instance of the CHIP8 4K memory map.
@@ -86,5 +88,10 @@ uint16_t getMemOffset(uint8_t* address);
 
 void printDisassembly();
 
+void jump(uint16_t address);
+void setVx(uint8_t registerNum, uint8_t valueToSet);
+void setAddressRegister(uint16_t address);
+
+void runProgram();
 
 #endif // CHIP8_H

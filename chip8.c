@@ -2,6 +2,8 @@
 
 struct chip8 chip8Mem;
 uint16_t numInstructions;
+uint16_t currentInstruction;
+int8_t run;
 
 int8_t readInstructionsFromFile(char* filename)
 {
@@ -95,12 +97,12 @@ void parseVariableOpcode(uint16_t instruction)
     uint8_t firstHexDigit = instruction >> 12;
     switch(firstHexDigit)
     {
-    case 0x01: printf("jump %X\n", address); break;
+    case 0x01: jump(address); break;
     case 0x02: printf("call subroutine at %X\n", address); break;
     case 0x03: printf("if v%x != %X then\n", registerX, twoDigitNumber); break;
     case 0x04: printf("if v%x == %X then\n", registerX, twoDigitNumber); break;
     case 0x05: printf("if v%x != v%x then\n", registerX, registerY); break;
-    case 0x06: printf("v%x := %X\n", registerX, twoDigitNumber); break;
+    case 0x06: setVx(registerX, twoDigitNumber); break;
     case 0x07: printf("v%x += %X\n", registerX, twoDigitNumber); break;
     case 0x08:
     {
@@ -122,7 +124,7 @@ void parseVariableOpcode(uint16_t instruction)
         break;
     }
     case 0x09: printf("if v%x == v%x then\n", registerX, registerY); break;
-    case 0x0a: printf("i := %X\n", address); break;
+    case 0x0a: setAddressRegister(address); break;
     case 0x0b: printf("jump0 %X\n", address); break;
     case 0x0c: printf("v%x := random %X\n", registerX, twoDigitNumber); break;
     case 0x0d: printf("sprite v%x v%x %X\n", registerX, registerY, oneDigitNumber); break;
@@ -153,25 +155,77 @@ void parseVariableOpcode(uint16_t instruction)
         }
         break;
     }
-    default: printf("Invalid opcode\n"); break;
+    default: printf("Invalid opcode\n"); currentInstruction++; break;
     }
 }
 
 uint16_t getMemOffset(uint8_t* address)
 {
-    // printf("CHIP8 Mem start: %p\n", &chip8Mem);
-    // printf("Address %p\n", address);
     uint16_t diff = address - (uint8_t*) &chip8Mem;
-    // printf("Diff: %X\n", diff);
     return diff;
 }
 
 void printDisassembly()
 {
+    run = 0;
     for (uint16_t i = 0; i < numInstructions; i++)
     {
         uint16_t instructionAddress = getMemOffset((uint8_t*) &chip8Mem.program + (sizeof(i) * i));
         printf("%X %X ", chip8Mem.program[i], instructionAddress);
         parseOpcode(chip8Mem.program[i]);
     }
+}
+
+void jump(uint16_t address)
+{
+    printf("jump %X\n", address);
+
+    printf("Current Instruction: %X\n", currentInstruction);
+    printf("Jumping to %X\n", address);
+    currentInstruction = address;
+
+
+
+}
+
+void setAddressRegister(uint16_t address)
+{
+    printf("i := %X\n", address);
+    currentInstruction+=2;
+
+}
+
+void setVx(uint8_t registerNum, uint8_t valueToSet)
+{
+    printf("v%x := %X\n", registerNum, valueToSet);
+    chip8Mem.genPurposeRegisters[registerNum] = valueToSet;
+    currentInstruction += 2;
+}
+
+void runProgram()
+{
+    run = 1;
+
+    currentInstruction = 0x200;
+    int count = 0;
+    // TODO switch to a different flag in loop - currently implementing opcode
+    // functions one at a time from an example .ch8 file
+    while (count < 8)
+    {
+        printf("--------------------------------------------\n");
+        uint16_t opcodeAtInstruction = chip8Mem.program[(currentInstruction - 0x200) / 2];
+        printf("current instruction: %X\n", currentInstruction);
+        printf("Opcode At instruction: %X\n", opcodeAtInstruction);
+        parseOpcode(opcodeAtInstruction);
+        printf("next instruction: %X\n", currentInstruction);
+        count++;
+    }
+
+
+
+
+
+
+
+
 }
