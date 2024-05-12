@@ -29,6 +29,8 @@ struct chip8{
     uint8_t display[DISPLAY_SIZE_BYTES]; // 0x0F00 - 0xFFF
 };
 
+extern struct chip8 chip8Mem;
+
 /**
  * @brief Reads input .ch8 file and stores contents in the program
  * portion of the memory map.

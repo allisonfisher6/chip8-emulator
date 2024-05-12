@@ -1,5 +1,7 @@
 #include "chip8.h"
 
+struct chip8 chip8Mem;
+
 int16_t readInstructionsFromFile(char* filename, uint16_t *programMem)
 {
     FILE* fptr = fopen(filename, "r");
