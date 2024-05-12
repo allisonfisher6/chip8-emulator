@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <string.h>
 
 #define MAX_MEM_BYTES 4096 // max memory of 4K systems (bytes)
 #define INTERPRETER_SIZE_BYTES 512 // Memory reserved for interpreter.
@@ -35,5 +36,11 @@ struct chip8{
  * @param programMem Pointer to the program portion of the memory map.
  */
 int8_t readInstructionsFromFile(char* filename, uint16_t *programMem);
+
+/**
+ * @brief Clears the display contents by setting all pixels to 0.
+ * @param display Pointer to the display portion of memory.
+ */
+void clearDisplay(uint8_t *display);
 
 #endif // CHIP8_H

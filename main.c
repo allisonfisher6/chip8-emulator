@@ -2,28 +2,19 @@
 
 void printDisplayBits(uint8_t *data, uint8_t rows, uint8_t cols);
 
-
-
-uint8_t *instructions;
-uint16_t numInstructions;
-
-
 int main(int argc, char* argv[])
 {
     struct chip8 processor;
+
+    // copy input program into memory
     readInstructionsFromFile(argv[1], processor.program);
-    // parseInstructionsFromFile(argv[1]);
 
+    // begin with a clear display
+    clearDisplay(processor.display);
 
-
-    // init display to 0
-    memset(processor.display, 0x00, 8 * 4);
-
-
-    // printDisplayBits(processor.display, 32, 64);
-    // processor.display = {0};
-
-    free(instructions);
+    // TODO begin processing instructions
+    // TODO find library to handle graphics
+    // TODO handle keyboard input
 
     return 0;
 }

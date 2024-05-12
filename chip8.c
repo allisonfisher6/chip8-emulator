@@ -35,3 +35,8 @@ int8_t readInstructionsFromFile(char* filename, uint16_t *programMem)
     fclose(fptr);
     return 0;
 }
+
+void clearDisplay(uint8_t *display)
+{
+    memset(display, 0x00, DISPLAY_SIZE_BYTES);
+}
