@@ -43,4 +43,14 @@ int8_t readInstructionsFromFile(char* filename, uint16_t *programMem);
  */
 void clearDisplay(uint8_t *display);
 
+/**
+ * @brief Prints the 64x32 bit display for experimentation and debugging
+ * purposes until graphics are implemented. @TODO remove when graphics are
+ * implemented.
+ * @param data Pointer to display data.
+ * @param rows Number of rows in display (Y-axis)
+ * @param cols Number of columns in display (X-axis)
+ */
+void printDisplayBits(uint8_t *data, uint8_t rows, uint8_t cols);
+
 #endif // CHIP8_H

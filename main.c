@@ -11,6 +11,7 @@ int main(int argc, char* argv[])
 
     // begin with a clear display
     clearDisplay(processor.display);
+    printDisplayBits(processor.display, 32, 64);
 
     // TODO begin processing instructions
     // TODO find library to handle graphics
@@ -139,26 +140,6 @@ void parseInstructionsFromFile(char* filename)
     printf("\n");
 
     fclose(fptr);
-}
-
-
-/**
- * @brief printDisplayBits Prints the 64x32 bit display for experimentation
- * and debugging purposes until graphics are implemented. @TODO remove when
- * graphics are implemented.
- */
-void printDisplayBits(uint8_t *data, uint8_t rows, uint8_t cols)
-{
-    printf("----------------\n");
-    for(uint8_t row = 0; row < rows; row++)
-    {
-        for(int i = (cols - 1); i >= 0; i--)
-        {
-            printf("%d ", (data[row] >> i) & 1);
-        }
-        printf("\n");
-    }
-    printf("---------------\n");
 }
 
 void drawSprite(struct chip8* processor, uint8_t xpos, uint8_t ypos)
