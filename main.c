@@ -1,15 +1,8 @@
-#include <stdio.h>
-#include <stdint.h>
-#include <string.h>
+#include "chip8.h"
 
 void printDisplayBits(uint8_t *data, uint8_t rows, uint8_t cols);
 
-struct chip8{
-    uint8_t genPurposeRegisters[16];
-    uint16_t addressRegister; // this is only 12 bits
-    uint8_t stack[48]; // original rca 1802 allocated 48 bytes
-    uint8_t display[32];
-};
+
 
 uint8_t *instructions;
 uint16_t numInstructions;
@@ -17,16 +10,17 @@ uint16_t numInstructions;
 
 int main(int argc, char* argv[])
 {
-    readInstructionsFromFile(argv[1]);
-    parseInstructionsFromFile(argv[1]);
-
     struct chip8 processor;
+    readInstructionsFromFile(argv[1], processor.program);
+    // parseInstructionsFromFile(argv[1]);
+
+
 
     // init display to 0
     memset(processor.display, 0x00, 8 * 4);
 
 
-    printDisplayBits(processor.display, 32, 64);
+    // printDisplayBits(processor.display, 32, 64);
     // processor.display = {0};
 
     free(instructions);
@@ -156,25 +150,6 @@ void parseInstructionsFromFile(char* filename)
     fclose(fptr);
 }
 
-void readInstructionsFromFile(char* filename)
-{
-    FILE* fptr = fopen(filename, "r");
-    if (fptr == NULL)
-    {
-        printf("Failed to open input file.\n");
-        return -1;
-    }
-
-    fseek(fptr, sizeof(uint8_t), SEEK_END);
-    uint16_t numInstructionsInFile = ftell(fptr);
-    printf("%d \n", numInstructionsInFile);
-
-    // allocate mem for the instructions/opcodes
-    instructions = malloc(sizeof(uint8_t) * numInstructionsInFile);
-
-    // reset file pointer to beginning
-    fptr = fptr - numInstructionsInFile;
-}
 
 /**
  * @brief printDisplayBits Prints the 64x32 bit display for experimentation
