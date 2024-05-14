@@ -64,12 +64,11 @@ void printDisplayBits(uint8_t rows, uint8_t cols);
  * @brief Draws a sprite at provided x and y coordinates that has a width of 8
  * pixels and passed in height. VF is set to 1 if any sceen pixels are flipped
  * from set to unset when the sprite is draw and 0 if it does not happen.
- * @param pixelsToDraw Pointer to pixel data in memory.
  * @param xpos Position on x-axis to draw the sprite.
  * @param ypos Position on y-axis to draw the sprite.
  * @param height Pixel height of the sprite.
  */
-void drawSprite(uint8_t *pixelsToDraw, uint8_t xpos, uint8_t ypos, uint8_t height);
+void drawSprite(uint8_t xpos, uint8_t ypos, uint8_t height);
 
 /**
  * @brief Translates instruction into the CHIP-8 opcode it represents.
@@ -91,6 +90,23 @@ void printDisassembly();
 void jump(uint16_t address);
 void setVx(uint8_t registerNum, uint8_t valueToSet);
 void setAddressRegister(uint16_t address);
+
+// TODO combine these
+void ifNumEqualThenSkip(uint8_t vx, uint8_t numToCompare);
+void ifNumNotEqualThenSkip(uint8_t vx, uint8_t numToCompare);
+void ifVyEqualThenSkip(uint8_t vx, uint8_t vy);
+void ifVyNotEqualThenSkip(uint8_t vx, uint8_t vy);
+
+
+void returnFromSubroutine();
+
+void callSubroutine(uint16_t address);
+void addNumToVx(uint8_t vx, uint8_t num);
+
+void doVxVyOperation(uint8_t vx, uint8_t vy, char* operand);
+
+void jump0(uint16_t address);
+void setVxRandom(uint8_t vx, uint8_t num);
 
 void runProgram();
 

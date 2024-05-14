@@ -60,17 +60,19 @@ void printDisplayBits(uint8_t rows, uint8_t cols)
     printf("---------------\n");
 }
 
-void drawSprite(uint8_t *pixelsToDraw, uint8_t xpos, uint8_t ypos, uint8_t height)
+void drawSprite(uint8_t xpos, uint8_t ypos, uint8_t height)
 {
+    printf("sprite v%x v%x %d\n", xpos, ypos, height);
     // TODO implement
+    currentInstruction+=2;
 }
 
 void parseOpcode(uint16_t instruction)
 {
     switch(instruction)
     {
-    case 0x00e0: printf("%X clear\n", instruction); break;
-    case 0x00ee: printf("%X return\n", instruction); break;
+    case 0x00e0: printf("%X clear\n", instruction); clearDisplay(); break;
+    case 0x00ee: returnFromSubroutine(); break;
     default: parseVariableOpcode(instruction);
     }
 }
@@ -98,12 +100,12 @@ void parseVariableOpcode(uint16_t instruction)
     switch(firstHexDigit)
     {
     case 0x01: jump(address); break;
-    case 0x02: printf("call subroutine at %X\n", address); break;
-    case 0x03: printf("if v%x != %X then\n", registerX, twoDigitNumber); break;
-    case 0x04: printf("if v%x == %X then\n", registerX, twoDigitNumber); break;
-    case 0x05: printf("if v%x != v%x then\n", registerX, registerY); break;
+    case 0x02: callSubroutine(address); break;
+    case 0x03: ifNumEqualThenSkip(registerX, twoDigitNumber); break;
+    case 0x04: ifNumNotEqualThenSkip(registerX, twoDigitNumber); break;
+    case 0x05: ifVyEqualThenSkip(registerX, registerY); break;
     case 0x06: setVx(registerX, twoDigitNumber); break;
-    case 0x07: printf("v%x += %X\n", registerX, twoDigitNumber); break;
+    case 0x07: addNumToVx(registerX, twoDigitNumber); break;
     case 0x08:
     {
         char* operand = "<op>";
@@ -120,14 +122,14 @@ void parseVariableOpcode(uint16_t instruction)
         case 0x000e: operand = "<<="; break;
         default: printf("Invalid opcode "); break;
         }
-        printf("v%x %s v%x\n", registerX, operand, registerY);
+        doVxVyOperation(registerX, registerY, operand);
         break;
     }
-    case 0x09: printf("if v%x == v%x then\n", registerX, registerY); break;
+    case 0x09: ifVyNotEqualThenSkip(registerX, registerY); break;
     case 0x0a: setAddressRegister(address); break;
-    case 0x0b: printf("jump0 %X\n", address); break;
-    case 0x0c: printf("v%x := random %X\n", registerX, twoDigitNumber); break;
-    case 0x0d: printf("sprite v%x v%x %X\n", registerX, registerY, oneDigitNumber); break;
+    case 0x0b: jump0(address); break;
+    case 0x0c: setVxRandom(registerX, twoDigitNumber; break;
+    case 0x0d: drawSprite(registerX, registerY, oneDigitNumber); break;
     case 0x0e:
     {
         switch(instruction & 0x00ff)
@@ -183,9 +185,6 @@ void jump(uint16_t address)
     printf("Current Instruction: %X\n", currentInstruction);
     printf("Jumping to %X\n", address);
     currentInstruction = address;
-
-
-
 }
 
 void setAddressRegister(uint16_t address)
@@ -202,6 +201,26 @@ void setVx(uint8_t registerNum, uint8_t valueToSet)
     currentInstruction += 2;
 }
 
+void ifNumEqualThenSkip(uint8_t vx, uint8_t numToCompare)
+{
+    printf("if v%x == %X then skip next\n", vx, numToCompare);
+    currentInstruction+=2;
+    if (chip8Mem.genPurposeRegisters[vx] == numToCompare)
+    {
+        currentInstruction+=2;
+    }
+}
+
+void ifNumNotEqualThenSkip(uint8_t vx, uint8_t numToCompare)
+{
+    printf("if v%x != %X then skip next\n", vx, numToCompare);
+    currentInstruction+=2;
+    if (chip8Mem.genPurposeRegisters[vx] != numToCompare)
+    {
+        currentInstruction+=2;
+    }
+}
+
 void runProgram()
 {
     run = 1;
@@ -210,7 +229,7 @@ void runProgram()
     int count = 0;
     // TODO switch to a different flag in loop - currently implementing opcode
     // functions one at a time from an example .ch8 file
-    while (count < 8)
+    while (count < 17)
     {
         printf("--------------------------------------------\n");
         uint16_t opcodeAtInstruction = chip8Mem.program[(currentInstruction - 0x200) / 2];
@@ -221,11 +240,74 @@ void runProgram()
         count++;
     }
 
+}
+
+void returnFromSubroutine()
+{
+    printf("%X return\n", instruction);
+
+    // TODO implement
+    printf("**************** TODO implement\n");
+    currentInstruction+=2; // will be from stack
+}
 
 
+void callSubroutine(uint16_t address)
+{
+    printf("call subroutine at %X\n", address);
 
+    // TODO implement
+    printf("**************** TODO implement\n");
+    currentInstruction+=2; // will be based on the address of subroutine
+}
 
+void ifVyEqualThenSkip(uint8_t vx, uint8_t vy)
+{
+    printf("if v%x == v%x then skip next\n", vx, vy);
+    currentInstruction+=2;
+    if (chip8Mem.genPurposeRegisters[vx] == chip8Mem.genPurposeRegisters[vy])
+    {
+        currentInstruction+=2;
+    }
+}
 
+void ifVyNotEqualThenSkip(uint8_t vx, uint8_t vy)
+{
+    printf("if v%x != v%x then skip next\n", vx, vy);
+    currentInstruction+=2;
+    if (chip8Mem.genPurposeRegisters[vx] != chip8Mem.genPurposeRegisters[vy])
+    {
+        currentInstruction+=2;
+    }
+}
 
+void addNumToVx(uint8_t vx, uint8_t num)
+{
+    printf("v%x += %X\n", vx, num);
+    chip8Mem.genPurposeRegisters[vx] += num;
+    currentInstruction+=2;
+}
 
+void doVxVyOperation(uint8_t vx, uint8_t vy, char *operand)
+{
+    // TODO implement
+    printf("v%x %s v%x\n", vx, operand, vy);
+
+    printf("**************** TODO implement\n");
+    currentInstruction+=2;
+}
+
+void jump0(uint16_t address)
+{
+    // TODO implement
+    printf("jump0 %X\n", address);
+    printf("**************** TODO implement\n");
+    currentInstruction+=2; // will be the jump'd addr
+}
+
+void setVxRandom(uint8_t vx, uint8_t num)
+{
+    // TODO implement
+    printf("v%x := random %X\n", registerX, twoDigitNumber);
+    currentInstruction+=2;
 }
