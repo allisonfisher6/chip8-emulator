@@ -20,7 +20,7 @@
 struct chip8{
     uint8_t interpreter[INTERPRETER_SIZE_BYTES]; // 0x0000 - 0x01FF
     uint16_t program[PROGRAM_SIZE_BYTES / 2]; // 0x0200 - 0x0E9F
-    uint8_t stack[STACK_SIZE_BYTES]; // 0x0EA0 - 0x0ECF
+    uint16_t stack[STACK_SIZE_BYTES / 2]; // 0x0EA0 - 0x0ECF
     uint16_t addressRegister;
     uint8_t delayTimer;
     uint8_t soundTimer;

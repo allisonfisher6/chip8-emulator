@@ -72,7 +72,7 @@ void parseOpcode(uint16_t instruction)
     switch(instruction)
     {
     case 0x00e0: printf("%X clear\n", instruction); clearDisplay(); break;
-    case 0x00ee: returnFromSubroutine(); break;
+    case 0x00ee: printf("%X return\n", instruction); returnFromSubroutine(); break;
     default: parseVariableOpcode(instruction);
     }
 }
@@ -128,7 +128,7 @@ void parseVariableOpcode(uint16_t instruction)
     case 0x09: ifVyNotEqualThenSkip(registerX, registerY); break;
     case 0x0a: setAddressRegister(address); break;
     case 0x0b: jump0(address); break;
-    case 0x0c: setVxRandom(registerX, twoDigitNumber; break;
+    case 0x0c: setVxRandom(registerX, twoDigitNumber); break;
     case 0x0d: drawSprite(registerX, registerY, oneDigitNumber); break;
     case 0x0e:
     {
@@ -228,8 +228,8 @@ void runProgram()
     currentInstruction = 0x200;
     int count = 0;
     // TODO switch to a different flag in loop - currently implementing opcode
-    // functions one at a time from an example .ch8 file
-    while (count < 17)
+    // functions one at a time from an example .ch8 file thus the count
+    while (count < 60)
     {
         printf("--------------------------------------------\n");
         uint16_t opcodeAtInstruction = chip8Mem.program[(currentInstruction - 0x200) / 2];
@@ -240,15 +240,14 @@ void runProgram()
         count++;
     }
 
+    printf("%d  %d\n", sizeof(uint16_t)
 }
 
 void returnFromSubroutine()
 {
-    printf("%X return\n", instruction);
-
     // TODO implement
     printf("**************** TODO implement\n");
-    currentInstruction+=2; // will be from stack
+    currentInstruction = chip8Mem.stack[0] += 2; // TODO set based on top of stack and not 0
 }
 
 
@@ -258,7 +257,10 @@ void callSubroutine(uint16_t address)
 
     // TODO implement
     printf("**************** TODO implement\n");
-    currentInstruction+=2; // will be based on the address of subroutine
+
+    // todo should adding to the stack instead of always index 0
+    chip8Mem.stack[0] = currentInstruction;
+    currentInstruction = address;
 }
 
 void ifVyEqualThenSkip(uint8_t vx, uint8_t vy)
@@ -308,6 +310,6 @@ void jump0(uint16_t address)
 void setVxRandom(uint8_t vx, uint8_t num)
 {
     // TODO implement
-    printf("v%x := random %X\n", registerX, twoDigitNumber);
+    printf("v%x := random %X\n", vx, num);
     currentInstruction+=2;
 }
