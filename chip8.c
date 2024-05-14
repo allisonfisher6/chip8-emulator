@@ -127,7 +127,7 @@ void parseVariableOpcode(uint16_t instruction)
     }
     case 0x09: ifVyNotEqualThenSkip(registerX, registerY); break;
     case 0x0a: setAddressRegister(address); break;
-    case 0x0b: jump0(address); break;
+    case 0x0b: jumpToAddrPlusV0(address); break;
     case 0x0c: setVxRandom(registerX, twoDigitNumber); break;
     case 0x0d: drawSprite(registerX, registerY, oneDigitNumber); break;
     case 0x0e:
@@ -299,12 +299,10 @@ void doVxVyOperation(uint8_t vx, uint8_t vy, char *operand)
     currentInstruction+=2;
 }
 
-void jump0(uint16_t address)
+void jumpToAddrPlusV0(uint16_t address)
 {
-    // TODO implement
     printf("jump0 %X\n", address);
-    printf("**************** TODO implement\n");
-    currentInstruction+=2; // will be the jump'd addr
+    currentInstruction = address + chip8Mem.genPurposeRegisters[0];
 }
 
 void setVxRandom(uint8_t vx, uint8_t num)

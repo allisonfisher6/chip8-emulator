@@ -105,7 +105,13 @@ void addNumToVx(uint8_t vx, uint8_t num);
 
 void doVxVyOperation(uint8_t vx, uint8_t vy, char* operand);
 
-void jump0(uint16_t address);
+/**
+ * @brief Jumps to the passed in address plus the value of V0 (a gen purpose
+ * register in the CHIP-8 memory).
+ * @param address Address to add with the value of V0 to jump to.
+ */
+void jumpToAddrPlusV0(uint16_t address);
+
 void setVxRandom(uint8_t vx, uint8_t num);
 
 void runProgram();
