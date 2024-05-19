@@ -1,3 +1,4 @@
 *.user
 /build
 /chip8-emulator/build
+/chip8-display/build
