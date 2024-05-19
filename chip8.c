@@ -1,6 +1,23 @@
 #include "chip8.h"
 
-struct chip8 chip8Mem;
+struct chip8 chip8Mem =  {
+    .fontData = {0xF0, 0x90, 0x90, 0x90, 0xF0,  //0
+                 0x20, 0x60, 0x20, 0x20, 0x70,  //1
+                 0xF0, 0x10, 0xF0, 0x80, 0xF0,  //2
+                 0xF0, 0x10, 0xF0, 0x10, 0xF0,  //3
+                 0x90, 0x90, 0xF0, 0x10, 0x10,  //4
+                 0xF0, 0x80, 0xF0, 0x10, 0xF0,  //5
+                 0xF0, 0x80, 0xF0, 0x90, 0xF0,  //6
+                 0xF0, 0x10, 0x20, 0x40, 0x40,  //7
+                 0xF0, 0x90, 0xF0, 0x90, 0xF0,  //8
+                 0xF0, 0x90, 0xF0, 0x10, 0xF0,  //9
+                 0xF0, 0x90, 0xF0, 0x90, 0x90,  //A
+                 0xE0, 0x90, 0xE0, 0x90, 0xE0,  //B
+                 0xF0, 0x80, 0x80, 0x80, 0xF0,  //C
+                 0xE0, 0x90, 0x90, 0x90, 0xE0,  //D
+                 0xF0, 0x80, 0xF0, 0x80, 0xF0,  //E
+                 0xF0, 0x80, 0xF0, 0x80, 0x80}  //F
+};
 uint16_t numInstructions;
 uint16_t currentInstruction;
 int8_t run;
@@ -46,6 +63,11 @@ void clearDisplay()
     memset(chip8Mem.display, 0x00, DISPLAY_SIZE_BYTES);
 }
 
+void testDrawing()
+{
+    chip8Mem.display[0] = 0xF;
+}
+
 void printDisplayBits(uint8_t rows, uint8_t cols)
 {
     printf("----------------\n");
@@ -63,6 +85,16 @@ void printDisplayBits(uint8_t rows, uint8_t cols)
 void drawSprite(uint8_t xpos, uint8_t ypos, uint8_t height)
 {
     printf("sprite v%x v%x %d\n", xpos, ypos, height);
+    /*
+     * 	Draws a sprite at coordinate (VX, VY) that has a width of 8 pixels and
+     * a height of N pixels. Each row of 8 pixels is read as bit-coded starting
+     * from memory location I; I value does not change after the execution of
+     * this instruction. As described above, VF is set to 1 if any screen
+     * pixels are flipped from set to unset when the sprite is drawn, and
+     * to 0 if that does not happen
+     */
+
+
     // TODO implement
     currentInstruction+=2;
 }
@@ -134,8 +166,8 @@ void parseVariableOpcode(uint16_t instruction)
     {
         switch(instruction & 0x00ff)
         {
-        case 0x009e: printf("if v%x -key then\n", registerX); break;
-        case 0x00a1: printf("if v%x key then\n", registerX); break;
+        case 0x009e: ifKeyIsPressedThenSkip(registerX); break;
+        case 0x00a1: ifKeyNotPressedThenSkip(registerX); break;
         default: printf("Invalid opcode\n");
         }
         break;
@@ -144,15 +176,15 @@ void parseVariableOpcode(uint16_t instruction)
     {
         switch(instruction & 0x00ff)
         {
-        case 0x0007: printf("v%x := delay\n", registerX); break;
-        case 0x000a: printf("v%x := key\n", registerX); break;
-        case 0x0015: printf("delay := v%x\n", registerX); break;
-        case 0x0018: printf("buzzer := v%x\n", registerX); break;
-        case 0x001e: printf("i += v%x\n", registerX); break;
-        case 0x0029: printf("i := hex v%x\n", registerX); break;
-        case 0x0033: printf("bcd v%x\n", registerX); break;
-        case 0x0055: printf("save v%x\n", registerX); break;
-        case 0x0065: printf("load v%x\n", registerX); break;
+        case 0x0007: setVxToDelay(registerX); break;
+        case 0x000a: waitForKey(registerX); break;
+        case 0x0015: setDelayTimer(registerX); break;
+        case 0x0018: setSoundTimer(registerX); break;
+        case 0x001e: addVxToI(registerX); break;
+        case 0x0029: setAddrToSprite(registerX); break;
+        case 0x0033: bcdVx(registerX); break;
+        case 0x0055: storeVx(registerX); break;
+        case 0x0065: loadVx( registerX); break;
         default: printf("Invalid opcode\n"); break;
         }
         break;
@@ -190,6 +222,7 @@ void jump(uint16_t address)
 void setAddressRegister(uint16_t address)
 {
     printf("i := %X\n", address);
+    chip8Mem.addressRegister = address;
     currentInstruction+=2;
 
 }
@@ -240,7 +273,7 @@ void runProgram()
         count++;
     }
 
-    printf("%d  %d\n", sizeof(uint16_t)
+    printf("%d  %d\n", sizeof(uint16_t));
 }
 
 void returnFromSubroutine()
@@ -249,7 +282,6 @@ void returnFromSubroutine()
     printf("**************** TODO implement\n");
     currentInstruction = chip8Mem.stack[0] += 2; // TODO set based on top of stack and not 0
 }
-
 
 void callSubroutine(uint16_t address)
 {
@@ -307,7 +339,90 @@ void jumpToAddrPlusV0(uint16_t address)
 
 void setVxRandom(uint8_t vx, uint8_t num)
 {
-    // TODO implement
     printf("v%x := random %X\n", vx, num);
+
+    // TODO get random number that has more uniformity
+    chip8Mem.genPurposeRegisters[vx] = (rand() % 255) & num;
+    currentInstruction+=2;
+}
+
+void bcdVx(uint8_t vx)
+{
+    printf("bcd v%x\n", vx);
+
+    // TODO implement
+    currentInstruction+=2;
+}
+
+void storeVx(uint8_t vx)
+{
+    printf("save v%x\n", vx);
+
+    // TODO implement
+    currentInstruction+=2;
+}
+
+void loadVx(uint8_t vx)
+{
+    printf("load v%x\n", vx);
+
+    // TODO implement
+    currentInstruction+=2;
+}
+
+void setVxToDelay(uint8_t vx)
+{
+    printf("v%x := delay\n", vx);
+    // TODO implement
+    currentInstruction+=2;
+}
+
+void waitForKey(uint8_t vx)
+{
+    printf("v%x := key\n", vx);
+    // TODO implement
+    currentInstruction+=2;
+}
+
+void setDelayTimer(uint8_t vx)
+{
+    printf("delay := v%x\n", vx);
+    // TODO implement
+    currentInstruction+=2;
+}
+
+void setSoundTimer(uint8_t vx)
+{
+    printf("buzzer := v%x\n", vx);
+    // TODO implement
+    currentInstruction+=2;
+}
+
+void addVxToI(uint8_t vx)
+{
+    printf("i += v%x\n", vx);
+    // TODO implement
+    currentInstruction+=2;
+}
+
+void setAddrToSprite(uint8_t vx)
+{
+    printf("i := hex v%x\n", vx);
+    chip8Mem.addressRegister = getMemOffset(&chip8Mem.fontData[5 * vx]);
+    currentInstruction+=2;
+}
+
+
+void ifKeyNotPressedThenSkip(uint8_t vx)
+{
+    printf("if v%x key not pressed then skip\n", vx);
+    // TODO implement
+    currentInstruction+=2;
+}
+
+void ifKeyIsPressedThenSkip(uint8_t vx)
+{
+    printf("if v%x key pressed then skip\n", vx);
+    // TODO implement
     currentInstruction+=2;
 }

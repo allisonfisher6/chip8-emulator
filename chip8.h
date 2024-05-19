@@ -12,13 +12,15 @@
 #define WORK_AREA_SIZE_BYTES 48 // Memory reserved for interpreter work area.
 #define DISPLAY_SIZE_BYTES 256 // Memory reserved for display data.
 #define NUM_GEN_PURPOSE_REGISTERS 16 // CHIP-8 has 16 1-byte registers V0-VF.
+#define FONT_DATA_SIZE_BYTES 80
 
 
 /**
  * @brief Represents the memory map.
  */
 struct chip8{
-    uint8_t interpreter[INTERPRETER_SIZE_BYTES]; // 0x0000 - 0x01FF
+    uint8_t fontData[FONT_DATA_SIZE_BYTES];
+    uint8_t interpreter[INTERPRETER_SIZE_BYTES - FONT_DATA_SIZE_BYTES]; // 0x0000 - 0x01FF
     uint16_t program[PROGRAM_SIZE_BYTES / 2]; // 0x0200 - 0x0E9F
     uint16_t stack[STACK_SIZE_BYTES / 2]; // 0x0EA0 - 0x0ECF
     uint16_t addressRegister;
@@ -114,6 +116,22 @@ void jumpToAddrPlusV0(uint16_t address);
 
 void setVxRandom(uint8_t vx, uint8_t num);
 
+void ifKeyNotPressedThenSkip(uint8_t vx);
+void ifKeyIsPressedThenSkip(uint8_t vx);
+
+void setVxToDelay(uint8_t vx);
+void waitForKey(uint8_t vx);
+void setDelayTimer(uint8_t vx);
+void setSoundTimer(uint8_t vx);
+void addVxToI(uint8_t vx);
+void setAddrToSprite(uint8_t vx);
+
+void bcdVx(uint8_t vx);
+void storeVx(uint8_t vx);
+void loadVx(uint8_t vx);
+
 void runProgram();
+
+void testDrawing();
 
 #endif // CHIP8_H
