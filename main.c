@@ -13,7 +13,8 @@ int main(int argc, char* argv[])
 
     // begin with a clear display
     clearDisplay();
-    // printDisplayBits(32, 64);
+    testDrawing();
+    printDisplayBits(); // TODO remove when graphics are implemented
 
     // print disassembly
     printDisassembly();
@@ -21,8 +22,10 @@ int main(int argc, char* argv[])
 
     // TODO begin processing instructions
     runProgram();
+
     // TODO find library to handle graphics
     // TODO handle keyboard input
+    // TODO timers need to count down at a rate of 60hz
 
     return 0;
 }

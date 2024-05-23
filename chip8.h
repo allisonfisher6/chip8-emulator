@@ -13,6 +13,8 @@
 #define DISPLAY_SIZE_BYTES 256 // Memory reserved for display data.
 #define NUM_GEN_PURPOSE_REGISTERS 16 // CHIP-8 has 16 1-byte registers V0-VF.
 #define FONT_DATA_SIZE_BYTES 80
+#define DISPLAY_PIXEL_WIDTH 64
+#define DISPLAY_PIXEL_HEIGHT 32
 
 
 /**
@@ -57,10 +59,8 @@ void clearDisplay();
  * @brief Prints the 64x32 bit display for experimentation and debugging
  * purposes until graphics are implemented. @TODO remove when graphics are
  * implemented.
- * @param rows Number of rows in display (Y-axis)
- * @param cols Number of columns in display (X-axis)
  */
-void printDisplayBits(uint8_t rows, uint8_t cols);
+void printDisplayBits();
 
 /**
  * @brief Draws a sprite at provided x and y coordinates that has a width of 8

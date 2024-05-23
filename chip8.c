@@ -65,20 +65,42 @@ void clearDisplay()
 
 void testDrawing()
 {
-    chip8Mem.display[0] = 0xF;
+    chip8Mem.display[0] = 0b10101111;
+    chip8Mem.display[255] = 0xF0;
+    drawSprite(45, 31, 5);
 }
 
-void printDisplayBits(uint8_t rows, uint8_t cols)
+void printBitsInByte(uint8_t byte)
+{
+    for(int8_t i = 7; i >= 0; i--)
+    {
+        printf("%d ", (byte >> i) & 1);
+    }
+}
+
+void printBitsInRow(uint8_t *row)
+{
+    for(int8_t i = 0; i < 8; i++)
+    {
+        printBitsInByte(*(row + i));
+        printf(" ");
+    }
+}
+
+void printDisplayBits()
 {
     printf("----------------\n");
-    for(uint8_t row = 0; row < rows; row++)
+    // there are 32 rows of 8 bytes (64 columns)
+    // display[0] is the first 8 bits of the top row
+    // display[8] is the first 8 bits of the second row from the top
+    // display[248] is the first 8 bits of the bottom row
+
+    for(int8_t i = 0; i < DISPLAY_PIXEL_HEIGHT; i++)
     {
-        for(int i = (cols - 1); i >= 0; i--)
-        {
-            printf("%d ", (chip8Mem.display[row] >> i) & 1);
-        }
+        printBitsInRow(&chip8Mem.display[8 * i]);
         printf("\n");
     }
+
     printf("---------------\n");
 }
 
@@ -93,6 +115,9 @@ void drawSprite(uint8_t xpos, uint8_t ypos, uint8_t height)
      * pixels are flipped from set to unset when the sprite is drawn, and
      * to 0 if that does not happen
      */
+
+    uint16_t spriteStartIndex = (xpos / 8) + (ypos * 8);
+
 
 
     // TODO implement
@@ -372,8 +397,9 @@ void loadVx(uint8_t vx)
 
 void setVxToDelay(uint8_t vx)
 {
+    // Opcode FX07: Sets VX to the value of the delay timer
+    chip8Mem.genPurposeRegisters[vx] = chip8Mem.delayTimer;
     printf("v%x := delay\n", vx);
-    // TODO implement
     currentInstruction+=2;
 }
 
@@ -386,35 +412,48 @@ void waitForKey(uint8_t vx)
 
 void setDelayTimer(uint8_t vx)
 {
+    // Opcode FX15: Sets the delay timer to VX.
     printf("delay := v%x\n", vx);
-    // TODO implement
+    chip8Mem.delayTimer = chip8Mem.genPurposeRegisters[vx];
     currentInstruction+=2;
 }
 
 void setSoundTimer(uint8_t vx)
 {
+    // Opcode FX18: Sets the sound timer to VX.
     printf("buzzer := v%x\n", vx);
-    // TODO implement
+    chip8Mem.soundTimer = chip8Mem.genPurposeRegisters[vx];
     currentInstruction+=2;
 }
 
 void addVxToI(uint8_t vx)
 {
+    // Opcode FX1E: Adds VX to I. VF is not affected.
     printf("i += v%x\n", vx);
-    // TODO implement
+    chip8Mem.addressRegister += chip8Mem.genPurposeRegisters[vx];
     currentInstruction+=2;
 }
 
 void setAddrToSprite(uint8_t vx)
 {
+    /*
+     * Opcode FX29: Set I to the mem addr of the sprite data corresponding
+     * to the hex digit stored in register VX.
+     */
     printf("i := hex v%x\n", vx);
-    chip8Mem.addressRegister = getMemOffset(&chip8Mem.fontData[5 * vx]);
+    uint8_t fontDigit = chip8Mem.genPurposeRegisters[vx] & 0x0F;
+    chip8Mem.addressRegister = getMemOffset(&chip8Mem.fontData[5 * fontDigit]);
     currentInstruction+=2;
 }
 
 
 void ifKeyNotPressedThenSkip(uint8_t vx)
 {
+    /* Opcode EXA1: Skip the next instruction if the key corresponding to
+     * the hex value stored in register VX is not pressed. The interpreter
+     * is not halted.
+     */
+
     printf("if v%x key not pressed then skip\n", vx);
     // TODO implement
     currentInstruction+=2;
@@ -422,6 +461,10 @@ void ifKeyNotPressedThenSkip(uint8_t vx)
 
 void ifKeyIsPressedThenSkip(uint8_t vx)
 {
+    /* Opcode EX9E: Skip the next instruction if the key corresponding to
+     * the hex value stored in register VX is pressed. The interpreter is
+     * not halted.
+     */
     printf("if v%x key pressed then skip\n", vx);
     // TODO implement
     currentInstruction+=2;
