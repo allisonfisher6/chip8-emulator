@@ -20,7 +20,8 @@ struct chip8 chip8Mem =  {
 };
 uint16_t numInstructions;
 uint16_t currentInstruction;
-int8_t run;
+uint8_t pauseExecutionForKeyInput = 0;
+uint8_t registerToStoreKeyPress;
 SDL_Window *window = NULL;
 SDL_Renderer *renderer;
 SDL_Event event;
@@ -195,7 +196,6 @@ uint16_t getMemOffset(uint8_t* address)
 
 void printDisassembly()
 {
-    run = 0;
     for (uint16_t i = 0; i < numInstructions; i++)
     {
         uint16_t instructionAddress = getMemOffset((uint8_t*) &chip8Mem.program + (sizeof(i) * i));
@@ -275,21 +275,45 @@ void runProgram()
         else if(event.type == SDL_KEYDOWN)
         {
             SDL_KeyboardEvent *keyEvent = &event.key;
-            processKeyPress(keyEvent->keysym.sym);
+            int8_t keyPressed = processKeyPress(keyEvent->keysym.sym);
 
-            // testing rendering display, remove.
-            chip8Mem.display[count] = 0b00001111;
-            renderDisplayData();
-            count+=1;
-            SDL_RenderPresent(renderer);
+            if(keyPressed != -1)
+            {
+                if(!pauseExecutionForKeyInput)
+                {
+                    // testing rendering display, remove.
+                    chip8Mem.display[count] = 0b00001111;
+                    renderDisplayData();
+                    count+=1;
+                    SDL_RenderPresent(renderer);
+                }
+                else
+                {
+                    // valid keypress registered while waiting for key
+                    chip8Mem.genPurposeRegisters[registerToStoreKeyPress] = keyPressed;
+
+                    // resume processing
+                    pauseExecutionForKeyInput = 0;
+
+                    printf("Resuming processing after keypress %x\n", chip8Mem.genPurposeRegisters[registerToStoreKeyPress]);
+                }
+            }
         }
         else if(event.type == SDL_USEREVENT)
         {
-            // testing rendering display, remove.
-            chip8Mem.display[count] = 0b00001111;
-            renderDisplayData();
-            count+=1;
-            SDL_RenderPresent(renderer);
+            // if execution is paused awaiting keypress, do not start next instruction
+            if(!pauseExecutionForKeyInput)
+            {
+                // testing rendering display, remove.
+                chip8Mem.display[count] = 0b00001111;
+                renderDisplayData();
+                count+=1;
+                SDL_RenderPresent(renderer);
+            }
+            else
+            {
+                printf("waiting for keypress...\n");
+            }
         }
     }
 
@@ -419,8 +443,20 @@ void setVxToDelay(uint8_t vx)
 
 void waitForKey(uint8_t vx)
 {
+    /*
+     * Opcode FX0A: Wait for a keypress and store the result in register vx.
+     * Halts all program execution until a key on the keypad is pressed.
+     */
+
     printf("v%x := key\n", vx);
-    // TODO implement
+
+    // stop the game loop until a *valid* key is pressed.
+    pauseExecutionForKeyInput = 1;
+    registerToStoreKeyPress = vx;
+
+    // the value corresponding to the key pressed will be saved in vx in
+    // runProgram()
+
     currentInstruction+=2;
 }
 
@@ -544,7 +580,7 @@ uint16_t gameLoopTimerCallback(uint16_t interval, void *param)
     return(interval);
 }
 
-void processKeyPress(SDL_Keycode keycode)
+int8_t processKeyPress(SDL_Keycode keycode)
 {
     // 1 2 3 4 q w e r a s d f z x c v on keybaord map to:
     // 1 2 3 c 4 5 6 d 7 9 9 e a 0 b f chip-8 keys
@@ -568,9 +604,10 @@ void processKeyPress(SDL_Keycode keycode)
         case 'x': convertedKey = 0x00; break;
         case 'c': convertedKey = 0x0b; break;
         case 'v': convertedKey = 0x0f; break;
-        default: printf("Invalid key press %c\n", keycode); return;
+        default: printf("Invalid key press %c\n", keycode); return -1;
     }
 
     chip8Mem.keyStates[convertedKey] = 0x01;
     printf("Converted key %c to chip-8 key %x\n", keycode, convertedKey);
+    return convertedKey;
 }

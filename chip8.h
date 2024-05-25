@@ -38,7 +38,8 @@ struct chip8{
 
 extern uint16_t numInstructions;
 extern uint16_t currentInstruction;
-extern int8_t run;
+extern uint8_t pauseExecutionForKeyInput;
+extern uint8_t registerToStoreKeyPress;
 
 /**
  * @brief The instance of the CHIP8 4K memory map.
@@ -147,5 +148,11 @@ void testDrawing();
 
 uint16_t gameLoopTimerCallback(uint16_t interval, void* param);
 
-void processKeyPress(SDL_Keycode keycode);
+/**
+ * @brief Takes in a key pressed on a standard keyboard and attempts to
+ * convert it to 0-F hex digits on a CHIP-8 keypad.
+ * @param keycode ASCII character pressed on user's keyboard.
+ * @return Hex value of key if conversion was made successfully, -1 otherwise.
+ */
+int8_t processKeyPress(SDL_Keycode keycode);
 #endif // CHIP8_H
