@@ -260,6 +260,9 @@ void runProgram()
     renderDisplayData();
     SDL_RenderPresent(renderer);
 
+    // TODO try using a timer to control speed at which instructions are run
+    uint16_t delayMs = 1000;
+    SDL_TimerID instructionTimer = SDL_AddTimer(delayMs, gameLoopTimerCallback, NULL);
     currentInstruction = 0x200;
     int count = 0;
 
@@ -274,13 +277,21 @@ void runProgram()
             SDL_KeyboardEvent *keyEvent = &event.key;
             printf("%c\n", keyEvent->keysym.sym);
 
-            SDL_RenderPresent(renderer);
-
             // testing rendering display, remove.
             chip8Mem.display[count] = 0b00001111;
             renderDisplayData();
             count+=1;
             printf("count: %d\n", count);
+            SDL_RenderPresent(renderer);
+        }
+        else if(event.type == SDL_USEREVENT)
+        {
+            // testing rendering display, remove.
+            chip8Mem.display[count] = 0b00001111;
+            renderDisplayData();
+            count+=1;
+            printf("count: %d\n", count);
+            SDL_RenderPresent(renderer);
         }
     }
 
@@ -507,4 +518,16 @@ uint8_t getDisplayBitValue(uint8_t x, uint8_t y)
     uint16_t indexIntoData = (x / 8) + (y * 8);
     uint8_t shift = 7 - (x % 8);
     return chip8Mem.display[indexIntoData] >> shift;
+}
+
+uint16_t gameLoopTimerCallback(uint16_t interval, void *param)
+{
+    // pushes an SDL_USEREVENT to the queue and causes the callback to be
+    // called again at the same interval
+    // https://stackoverflow.com/questions/27414548/sdl-timers-and-waitevent
+
+    SDL_Event loopTimerEvent;
+    loopTimerEvent.type = SDL_USEREVENT;
+    SDL_PushEvent(&loopTimerEvent);
+    return(interval);
 }

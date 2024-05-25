@@ -1,4 +1,4 @@
-#ifndef CHIP8_H
+﻿#ifndef CHIP8_H
 #define CHIP8_H
 
 #include <stdio.h>
@@ -142,5 +142,7 @@ uint8_t getDisplayBitValue(uint8_t x, uint8_t y);
 void renderDisplayData();
 void setPixelColor(uint8_t color);
 void testDrawing();
+
+uint16_t gameLoopTimerCallback(uint16_t interval, void* param);
 
 #endif // CHIP8_H
