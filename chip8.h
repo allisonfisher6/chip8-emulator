@@ -43,6 +43,10 @@ extern int8_t run;
  */
 extern struct chip8 chip8Mem;
 
+extern SDL_Window *window;
+extern SDL_Renderer *renderer;
+extern SDL_Event event;
+
 /**
  * @brief Reads input .ch8 file and stores contents in the program
  * portion of the memory map.
@@ -133,6 +137,10 @@ void loadVx(uint8_t vx);
 
 void runProgram();
 
+uint8_t getDisplayBitValue(uint8_t x, uint8_t y);
+
+void renderDisplayData();
+void setPixelColor(uint8_t color);
 void testDrawing();
 
 #endif // CHIP8_H

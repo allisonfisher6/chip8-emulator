@@ -21,6 +21,9 @@ struct chip8 chip8Mem =  {
 uint16_t numInstructions;
 uint16_t currentInstruction;
 int8_t run;
+SDL_Window *window = NULL;
+SDL_Renderer *renderer;
+SDL_Event event;
 
 int8_t readInstructionsFromFile(char* filename)
 {
@@ -68,40 +71,6 @@ void testDrawing()
     chip8Mem.display[0] = 0b10101111;
     chip8Mem.display[255] = 0xF0;
     drawSprite(45, 31, 5);
-}
-
-void printBitsInByte(uint8_t byte)
-{
-    for(int8_t i = 7; i >= 0; i--)
-    {
-        printf("%d ", (byte >> i) & 1);
-    }
-}
-
-void printBitsInRow(uint8_t *row)
-{
-    for(int8_t i = 0; i < 8; i++)
-    {
-        printBitsInByte(*(row + i));
-        printf(" ");
-    }
-}
-
-void printDisplayBits()
-{
-    printf("----------------\n");
-    // there are 32 rows of 8 bytes (64 columns)
-    // display[0] is the first 8 bits of the top row
-    // display[8] is the first 8 bits of the second row from the top
-    // display[248] is the first 8 bits of the bottom row
-
-    for(int8_t i = 0; i < DISPLAY_PIXEL_HEIGHT; i++)
-    {
-        printBitsInRow(&chip8Mem.display[8 * i]);
-        printf("\n");
-    }
-
-    printf("---------------\n");
 }
 
 void drawSprite(uint8_t xpos, uint8_t ypos, uint8_t height)
@@ -281,12 +250,48 @@ void ifNumNotEqualThenSkip(uint8_t vx, uint8_t numToCompare)
 
 void runProgram()
 {
-    run = 1;
+    // create graphics window
+    SDL_Init(SDL_INIT_VIDEO);
+    SDL_CreateWindowAndRenderer(64 * 10, 32 * 10, 0, &window, &renderer);
+    SDL_RenderSetScale(renderer, 10, 10);
+
+    // set all display data bits to 0 and render display
+    clearDisplay();
+    renderDisplayData();
+    SDL_RenderPresent(renderer);
 
     currentInstruction = 0x200;
     int count = 0;
+
+    while(1)
+    {
+        SDL_PollEvent(&event);
+
+        if(event.type == SDL_QUIT)
+            break;
+        else if(event.type == SDL_KEYDOWN)
+        {
+            SDL_KeyboardEvent *keyEvent = &event.key;
+            printf("%c\n", keyEvent->keysym.sym);
+
+            SDL_RenderPresent(renderer);
+
+            // testing rendering display, remove.
+            chip8Mem.display[count] = 0b00001111;
+            renderDisplayData();
+            count+=1;
+            printf("count: %d\n", count);
+        }
+    }
+
+    SDL_DestroyWindow(window);
+    SDL_Quit();
+    return;
+
     // TODO switch to a different flag in loop - currently implementing opcode
     // functions one at a time from an example .ch8 file thus the count
+
+
     while (count < 60)
     {
         printf("--------------------------------------------\n");
@@ -298,7 +303,7 @@ void runProgram()
         count++;
     }
 
-    printf("%d  %d\n", sizeof(uint16_t));
+    // printf("%d  %d\n", sizeof(uint16_t));
 }
 
 void returnFromSubroutine()
@@ -468,4 +473,38 @@ void ifKeyIsPressedThenSkip(uint8_t vx)
     printf("if v%x key pressed then skip\n", vx);
     // TODO implement
     currentInstruction+=2;
+}
+
+void renderDisplayData()
+{
+    for(uint8_t xpos = 0; xpos < DISPLAY_PIXEL_WIDTH; xpos++)
+    {
+        for(uint8_t ypos = 0; ypos < DISPLAY_PIXEL_WIDTH; ypos++)
+        {
+            setPixelColor(getDisplayBitValue(xpos, ypos));
+            SDL_RenderDrawPoint(renderer, xpos, ypos);
+        }
+    }
+
+}
+
+void setPixelColor(uint8_t color)
+{
+    if(color)
+    {
+        // pixels will be drawn in white
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    }
+    else
+    {
+        // pixels will be drawn in black
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    }
+}
+
+uint8_t getDisplayBitValue(uint8_t x, uint8_t y)
+{
+    uint16_t indexIntoData = (x / 8) + (y * 8);
+    uint8_t shift = 7 - (x % 8);
+    return chip8Mem.display[indexIntoData] >> shift;
 }
