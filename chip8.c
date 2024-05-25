@@ -275,13 +275,12 @@ void runProgram()
         else if(event.type == SDL_KEYDOWN)
         {
             SDL_KeyboardEvent *keyEvent = &event.key;
-            printf("%c\n", keyEvent->keysym.sym);
+            processKeyPress(keyEvent->keysym.sym);
 
             // testing rendering display, remove.
             chip8Mem.display[count] = 0b00001111;
             renderDisplayData();
             count+=1;
-            printf("count: %d\n", count);
             SDL_RenderPresent(renderer);
         }
         else if(event.type == SDL_USEREVENT)
@@ -290,7 +289,6 @@ void runProgram()
             chip8Mem.display[count] = 0b00001111;
             renderDisplayData();
             count+=1;
-            printf("count: %d\n", count);
             SDL_RenderPresent(renderer);
         }
     }
@@ -471,7 +469,14 @@ void ifKeyNotPressedThenSkip(uint8_t vx)
      */
 
     printf("if v%x key not pressed then skip\n", vx);
-    // TODO implement
+
+    uint8_t key = chip8Mem.genPurposeRegisters[vx];
+    if(!chip8Mem.keyStates[key])
+    {
+        // key is pressed, skip next instruction
+        currentInstruction += 2;
+    }
+
     currentInstruction+=2;
 }
 
@@ -482,7 +487,14 @@ void ifKeyIsPressedThenSkip(uint8_t vx)
      * not halted.
      */
     printf("if v%x key pressed then skip\n", vx);
-    // TODO implement
+
+    uint8_t key = chip8Mem.genPurposeRegisters[vx];
+    if(chip8Mem.keyStates[key])
+    {
+        // key is pressed, skip next instruction
+        currentInstruction += 2;
+    }
+
     currentInstruction+=2;
 }
 
@@ -530,4 +542,35 @@ uint16_t gameLoopTimerCallback(uint16_t interval, void *param)
     loopTimerEvent.type = SDL_USEREVENT;
     SDL_PushEvent(&loopTimerEvent);
     return(interval);
+}
+
+void processKeyPress(SDL_Keycode keycode)
+{
+    // 1 2 3 4 q w e r a s d f z x c v on keybaord map to:
+    // 1 2 3 c 4 5 6 d 7 9 9 e a 0 b f chip-8 keys
+
+    uint8_t convertedKey;
+    switch(keycode)
+    {
+        case '1': convertedKey = 0x01; break;
+        case '2': convertedKey = 0x02; break;
+        case '3': convertedKey = 0x03; break;
+        case '4': convertedKey = 0x0c; break;
+        case 'q': convertedKey = 0x04; break;
+        case 'w': convertedKey = 0x05; break;
+        case 'e': convertedKey = 0x06; break;
+        case 'r': convertedKey = 0x0d; break;
+        case 'a': convertedKey = 0x07; break;
+        case 's': convertedKey = 0x08; break;
+        case 'd': convertedKey = 0x09; break;
+        case 'f': convertedKey = 0x0e; break;
+        case 'z': convertedKey = 0x0a; break;
+        case 'x': convertedKey = 0x00; break;
+        case 'c': convertedKey = 0x0b; break;
+        case 'v': convertedKey = 0x0f; break;
+        default: printf("Invalid key press %c\n", keycode); return;
+    }
+
+    chip8Mem.keyStates[convertedKey] = 0x01;
+    printf("Converted key %c to chip-8 key %x\n", keycode, convertedKey);
 }

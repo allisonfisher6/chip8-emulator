@@ -16,6 +16,7 @@
 #define FONT_DATA_SIZE_BYTES 80
 #define DISPLAY_PIXEL_WIDTH 64
 #define DISPLAY_PIXEL_HEIGHT 32
+#define NUM_INPUT_KEYS 16
 
 
 /**
@@ -23,7 +24,8 @@
  */
 struct chip8{
     uint8_t fontData[FONT_DATA_SIZE_BYTES];
-    uint8_t interpreter[INTERPRETER_SIZE_BYTES - FONT_DATA_SIZE_BYTES]; // 0x0000 - 0x01FF
+    uint8_t keyStates[NUM_INPUT_KEYS];
+    uint8_t interpreter[INTERPRETER_SIZE_BYTES - FONT_DATA_SIZE_BYTES - NUM_INPUT_KEYS];
     uint16_t program[PROGRAM_SIZE_BYTES / 2]; // 0x0200 - 0x0E9F
     uint16_t stack[STACK_SIZE_BYTES / 2]; // 0x0EA0 - 0x0ECF
     uint16_t addressRegister;
@@ -145,4 +147,5 @@ void testDrawing();
 
 uint16_t gameLoopTimerCallback(uint16_t interval, void* param);
 
+void processKeyPress(SDL_Keycode keycode);
 #endif // CHIP8_H
