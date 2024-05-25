@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#include <SDL.h>
 
 #define MAX_MEM_BYTES 4096 // max memory of 4K systems (bytes)
 #define INTERPRETER_SIZE_BYTES 512 // Memory reserved for interpreter.
