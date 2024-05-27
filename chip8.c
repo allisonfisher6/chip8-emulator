@@ -26,6 +26,7 @@ SDL_Window *window = NULL;
 SDL_Renderer *renderer;
 SDL_Event event;
 
+
 int8_t readInstructionsFromFile(char* filename)
 {
     FILE* fptr = fopen(filename, "r");
@@ -344,8 +345,12 @@ void runProgram()
     SDL_RenderPresent(renderer);
 
     // TODO try using a timer to control speed at which instructions are run
-    uint16_t delayMs = 500;
+    uint16_t delayMs = 10;
     SDL_TimerID instructionTimer = SDL_AddTimer(delayMs, gameLoopTimerCallback, NULL);
+
+    // setup delay timer
+    SDL_TimerID delayTimerSDL = SDL_AddTimer((1000 / 60), delayTimerCallback, NULL);
+
     currentInstruction = 0x200;
     int count = 0;
 
@@ -358,7 +363,7 @@ void runProgram()
         else if(event.type == SDL_KEYDOWN)
         {
             SDL_KeyboardEvent *keyEvent = &event.key;
-            int8_t keyPressed = processKeyPress(keyEvent->keysym.sym);
+            int8_t keyPressed = processKeyPress(keyEvent->keysym.sym, 1);
 
             if(keyPressed != -1)
             {
@@ -381,6 +386,11 @@ void runProgram()
                     printf("Resuming processing after keypress %x\n", chip8Mem.genPurposeRegisters[registerToStoreKeyPress]);
                 }
             }
+        }
+        else if(event.type == SDL_KEYUP)
+        {
+            SDL_KeyboardEvent *keyEvent = &event.key;
+            int8_t keyPressed = processKeyPress(keyEvent->keysym.sym, 0);
         }
         else if(event.type == SDL_USEREVENT)
         {
@@ -666,7 +676,7 @@ uint16_t gameLoopTimerCallback(uint16_t interval, void *param)
     return(interval);
 }
 
-int8_t processKeyPress(SDL_Keycode keycode)
+int8_t processKeyPress(SDL_Keycode keycode, uint8_t keyDown)
 {
     // 1 2 3 4 q w e r a s d f z x c v on keybaord map to:
     // 1 2 3 c 4 5 6 d 7 9 9 e a 0 b f chip-8 keys
@@ -693,7 +703,25 @@ int8_t processKeyPress(SDL_Keycode keycode)
         default: printf("Invalid key press %c\n", keycode); return -1;
     }
 
-    chip8Mem.keyStates[convertedKey] = 0x01;
+    if(keyDown)
+    {
+        chip8Mem.keyStates[convertedKey] = 0x01;
+    }
+    else
+    {
+        chip8Mem.keyStates[convertedKey] = 0x00;
+    }
+
     printf("Converted key %c to chip-8 key %x\n", keycode, convertedKey);
     return convertedKey;
+}
+
+uint16_t delayTimerCallback(uint16_t interval, void *param)
+{
+    if(chip8Mem.delayTimer > 0)
+    {
+        chip8Mem.delayTimer--;
+         printf("~~~~~~~~~~~~~~~ delay timer callback\n");
+    }
+    return interval;
 }

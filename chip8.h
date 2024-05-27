@@ -148,11 +148,14 @@ void testDrawing();
 
 uint16_t gameLoopTimerCallback(uint16_t interval, void* param);
 
+uint16_t delayTimerCallback(uint16_t interval, void* param);
+
 /**
  * @brief Takes in a key pressed on a standard keyboard and attempts to
  * convert it to 0-F hex digits on a CHIP-8 keypad.
  * @param keycode ASCII character pressed on user's keyboard.
+ * @param keyDown 1 if key event was KEYDOWN, 0 if KEYUP.
  * @return Hex value of key if conversion was made successfully, -1 otherwise.
  */
-int8_t processKeyPress(SDL_Keycode keycode);
+int8_t processKeyPress(SDL_Keycode keycode, uint8_t keyDown);
 #endif // CHIP8_H
