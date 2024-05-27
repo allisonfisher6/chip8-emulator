@@ -144,7 +144,7 @@ uint8_t getDisplayBitValue(uint8_t x, uint8_t y);
 
 void renderDisplayData();
 void setPixelColor(uint8_t color);
-void testDrawing();
+
 
 uint16_t gameLoopTimerCallback(uint16_t interval, void* param);
 
@@ -158,4 +158,5 @@ uint16_t delayTimerCallback(uint16_t interval, void* param);
  * @return Hex value of key if conversion was made successfully, -1 otherwise.
  */
 int8_t processKeyPress(SDL_Keycode keycode, uint8_t keyDown);
+
 #endif // CHIP8_H
