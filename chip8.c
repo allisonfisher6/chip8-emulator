@@ -46,8 +46,9 @@ int8_t readInstructionsFromFile(char* filename)
         while (fread(&instruction, sizeof(instruction), 1, fptr) == 1)
         {
             // swap for endianness
-            uint16_t swapped = (instruction >> 8) | (instruction << 8);
-            chip8Mem.program[instructionIndex] = swapped;
+            // uint16_t swapped = (instruction >> 8) | (instruction << 8);
+            // chip8Mem.program[instructionIndex] = swapped;
+            chip8Mem.program[instructionIndex] = instruction;
             instructionIndex++;
         }
         printf("\n");
@@ -78,7 +79,7 @@ void drawSprite(uint8_t xpos, uint8_t ypos, uint8_t height)
 {
     printf("sprite v%x v%x %d\n", xpos, ypos, height);
     /*
-     * 	Draws a sprite at coordinate (VX, VY) that has a width of 8 pixels and
+     * Draws a sprite at coordinate (VX, VY) that has a width of 8 pixels and
      * a height of N pixels. Each row of 8 pixels is read as bit-coded starting
      * from memory location I; I value does not change after the execution of
      * this instruction. As described above, VF is set to 1 if any screen
@@ -86,11 +87,92 @@ void drawSprite(uint8_t xpos, uint8_t ypos, uint8_t height)
      * to 0 if that does not happen
      */
 
-    uint16_t spriteStartIndex = (xpos / 8) + (ypos * 8);
+    xpos = chip8Mem.genPurposeRegisters[xpos];
+    ypos = chip8Mem.genPurposeRegisters[ypos];
+    printf("drawing sprite at coords %d, %d\n", xpos, ypos);
+    // set VF to 0 by default, it will be set to 1 if any bits are flipped on to off
+    chip8Mem.genPurposeRegisters[0x0F] = 0x00;
+    uint8_t bitPositionInStartIndex = xpos % 8;
+    uint8_t spriteStartIndex = (xpos / 8) + (ypos * 8);
+    uint8_t overflowIndex = spriteStartIndex + 1;
+    if(xpos + 7 > 63)
+    {
+        overflowIndex = spriteStartIndex - 7;
+    }
 
+    uint8_t *addrOfValToDraw = ((uint8_t *) &chip8Mem + chip8Mem.addressRegister);
+    for(int rows = 0; rows < height; rows++)
+    {
+        uint8_t valToDraw = *addrOfValToDraw;
+        // printf("data to draw: %b\n", valToDraw);
+        addrOfValToDraw++;
+        uint8_t currentValFirstByte = chip8Mem.display[spriteStartIndex + (8 * rows)];
+        uint8_t shiftedSpriteForFirstByte = valToDraw >> bitPositionInStartIndex;
+        uint8_t resultFirstByte = shiftedSpriteForFirstByte ^ currentValFirstByte;
+        chip8Mem.display[spriteStartIndex + (8 * rows)] = resultFirstByte;
 
+        uint8_t currentValOverflowByte= chip8Mem.display[overflowIndex + (8 * rows)];
+        uint8_t shiftedSpriteForOverflow = (valToDraw << (8 - bitPositionInStartIndex)) & 0xFF;
+        uint8_t resultOverflowByte = shiftedSpriteForOverflow ^ currentValOverflowByte;
+        chip8Mem.display[overflowIndex + (8 * rows)] = resultOverflowByte;
 
-    // TODO implement
+        // printf("%08b%08b\n", resultFirstByte, resultOverflowByte);
+    //     uint8_t mask = 0b00000000;
+    //     printf("xpos: %X bitpos: %X\n", xpos, bitPositionInStartIndex);
+
+    //     switch(bitPositionInStartIndex)
+    //     {
+    //     case 0x00: mask = 0b11111111; break;
+    //     case 0x01: mask = 0b01111111; break;
+    //     case 0x02: mask = 0b00111111; break;
+    //     case 0x03: mask = 0b00011111; break;
+    //     case 0x04: mask = 0b00001111; break;
+    //     case 0x05: mask = 0b00000111; break;
+    //     case 0x06: mask = 0b00000011; break;
+    //     case 0x07: mask = 0b00000001; break;
+    //     }
+
+    //     uint8_t currentVal = chip8Mem.display[spriteStartIndex + (8 * rows)];
+    //     printf("First Byte Current value in display data: %08b\n", currentVal);
+    //     printf("Mask for first byte in display data: %08b\n", mask);
+
+    //     uint8_t valToDrawShifted = valToDraw >> bitPositionInStartIndex;
+    //     printf("Value to draw shifted to its start bit: %08b\n", valToDrawShifted);
+
+    //     // check if any bits of display data will be flipped from on to off
+    //     uint8_t anyFlippedOnToOff = (currentVal & mask) & (valToDraw >> bitPositionInStartIndex & mask);
+    //     printf("Result of checking for bits flipped on to off: %08b\n", anyFlippedOnToOff);
+
+    //     uint8_t result = (currentVal) ^ (valToDrawShifted & mask);
+    //     printf("Result that will be applied to display %08b\n", result);
+
+    //     if(anyFlippedOnToOff > 0)
+    //     {
+    //         chip8Mem.genPurposeRegisters[0x0F] = 0x01;
+    //     }
+
+    //     chip8Mem.display[spriteStartIndex + (8 * rows)] = result;
+
+    //     if(bitPositionInStartIndex > 0)
+    //     {
+    //         currentVal = chip8Mem.display[overflowIndex + (8 * rows)];
+    //         printf("Overflow Byte Current value in display data: %08b\n", currentVal);
+
+    //         mask = ~mask;
+    //         printf("Mask for overflow byte in display data: %08b\n", mask);
+    //         printf("test shift %01b\n", 0b11111111 << 7);
+    //         // valAndCompMask = chip8Mem.display[overflowIndex + (8 * rows)] & ~mask;
+    //         // newValAndMask = valToDraw & mask;
+    //         // combined = valAndCompMask | newValAndMask;
+    //         // printf("new combined %X\n", combined);
+    //         // chip8Mem.display[overflowIndex + (8 * rows)] = ~combined;
+    //     }
+
+    }
+
+    renderDisplayData();
+    SDL_RenderPresent(renderer);
+
     currentInstruction+=2;
 }
 
@@ -199,8 +281,9 @@ void printDisassembly()
     for (uint16_t i = 0; i < numInstructions; i++)
     {
         uint16_t instructionAddress = getMemOffset((uint8_t*) &chip8Mem.program + (sizeof(i) * i));
-        printf("%X %X ", chip8Mem.program[i], instructionAddress);
-        parseOpcode(chip8Mem.program[i]);
+        uint16_t swapped = (chip8Mem.program[i] >> 8) | (chip8Mem.program[i] << 8);
+        printf("%X %X ", swapped, instructionAddress);
+        parseOpcode(swapped);
     }
 }
 
@@ -261,7 +344,7 @@ void runProgram()
     SDL_RenderPresent(renderer);
 
     // TODO try using a timer to control speed at which instructions are run
-    uint16_t delayMs = 1000;
+    uint16_t delayMs = 500;
     SDL_TimerID instructionTimer = SDL_AddTimer(delayMs, gameLoopTimerCallback, NULL);
     currentInstruction = 0x200;
     int count = 0;
@@ -281,11 +364,11 @@ void runProgram()
             {
                 if(!pauseExecutionForKeyInput)
                 {
-                    // testing rendering display, remove.
-                    chip8Mem.display[count] = 0b00001111;
-                    renderDisplayData();
-                    count+=1;
-                    SDL_RenderPresent(renderer);
+                    // // testing rendering display, remove.
+                    // chip8Mem.display[count] = 0b00001111;
+                    // renderDisplayData();
+                    // count+=1;
+                    // SDL_RenderPresent(renderer);
                 }
                 else
                 {
@@ -304,39 +387,39 @@ void runProgram()
             // if execution is paused awaiting keypress, do not start next instruction
             if(!pauseExecutionForKeyInput)
             {
-                // testing rendering display, remove.
-                chip8Mem.display[count] = 0b00001111;
-                renderDisplayData();
-                count+=1;
-                SDL_RenderPresent(renderer);
+                // // testing rendering display, remove.
+                // chip8Mem.display[count] = 0b00001111;
+                // renderDisplayData();
+                // count+=1;
+                // SDL_RenderPresent(renderer);
+
+                printf("--------------------------------------------\n");
+                uint16_t opcodeAtInstruction = chip8Mem.program[(currentInstruction - 0x200) / 2];
+                uint16_t swapped = (opcodeAtInstruction >> 8) | (opcodeAtInstruction << 8);
+                printf("current instruction: %X\n", currentInstruction);
+                printf("Opcode At instruction: %X\n", swapped);
+                parseOpcode(swapped);
+                printf("next instruction: %X\n", currentInstruction);
+
+
             }
             else
             {
                 printf("waiting for keypress...\n");
             }
         }
+
+
+
+
+
+
     }
+
 
     SDL_DestroyWindow(window);
     SDL_Quit();
     return;
-
-    // TODO switch to a different flag in loop - currently implementing opcode
-    // functions one at a time from an example .ch8 file thus the count
-
-
-    while (count < 60)
-    {
-        printf("--------------------------------------------\n");
-        uint16_t opcodeAtInstruction = chip8Mem.program[(currentInstruction - 0x200) / 2];
-        printf("current instruction: %X\n", currentInstruction);
-        printf("Opcode At instruction: %X\n", opcodeAtInstruction);
-        parseOpcode(opcodeAtInstruction);
-        printf("next instruction: %X\n", currentInstruction);
-        count++;
-    }
-
-    // printf("%d  %d\n", sizeof(uint16_t));
 }
 
 void returnFromSubroutine()
@@ -402,10 +485,16 @@ void jumpToAddrPlusV0(uint16_t address)
 
 void setVxRandom(uint8_t vx, uint8_t num)
 {
-    printf("v%x := random %X\n", vx, num);
+    /*
+     * Opcode CXNN: Set VX to a random number with a mask of NN.
+     */
+
+    printf("v%x := random & %X\n", vx, num);
 
     // TODO get random number that has more uniformity
-    chip8Mem.genPurposeRegisters[vx] = (rand() % 255) & num;
+    uint8_t randNum = rand();
+    chip8Mem.genPurposeRegisters[vx] = (randNum % 255) & num;
+    printf("Set v%x to %X & %X = %X\n", vx, randNum, num, chip8Mem.genPurposeRegisters[vx]);
     currentInstruction+=2;
 }
 
@@ -436,6 +525,7 @@ void loadVx(uint8_t vx)
 void setVxToDelay(uint8_t vx)
 {
     // Opcode FX07: Sets VX to the value of the delay timer
+    printf("setting vf to delay timer value of: %d\n", chip8Mem.delayTimer);
     chip8Mem.genPurposeRegisters[vx] = chip8Mem.delayTimer;
     printf("v%x := delay\n", vx);
     currentInstruction+=2;
@@ -486,10 +576,6 @@ void addVxToI(uint8_t vx)
 
 void setAddrToSprite(uint8_t vx)
 {
-    /*
-     * Opcode FX29: Set I to the mem addr of the sprite data corresponding
-     * to the hex digit stored in register VX.
-     */
     printf("i := hex v%x\n", vx);
     uint8_t fontDigit = chip8Mem.genPurposeRegisters[vx] & 0x0F;
     chip8Mem.addressRegister = getMemOffset(&chip8Mem.fontData[5 * fontDigit]);
@@ -544,7 +630,6 @@ void renderDisplayData()
             SDL_RenderDrawPoint(renderer, xpos, ypos);
         }
     }
-
 }
 
 void setPixelColor(uint8_t color)
@@ -563,9 +648,10 @@ void setPixelColor(uint8_t color)
 
 uint8_t getDisplayBitValue(uint8_t x, uint8_t y)
 {
-    uint16_t indexIntoData = (x / 8) + (y * 8);
+
+    uint8_t indexIntoData = (x / 8) + (y * 8);
     uint8_t shift = 7 - (x % 8);
-    return chip8Mem.display[indexIntoData] >> shift;
+    return (chip8Mem.display[indexIntoData] >> shift) & 0b00000001;
 }
 
 uint16_t gameLoopTimerCallback(uint16_t interval, void *param)

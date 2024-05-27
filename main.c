@@ -12,8 +12,9 @@ int main(int argc, char* argv[])
     }
 
     // print disassembly
-    printDisassembly();
+    // printDisassembly();
 
+    printf("--------------------------------------\n");
     // TODO begin processing instructions
     runProgram();
 
