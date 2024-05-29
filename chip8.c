@@ -154,25 +154,7 @@ void parseVariableOpcode(uint16_t instruction)
     case 0x05: ifVyEqualThenSkip(registerX, registerY); break;
     case 0x06: setVx(registerX, twoDigitNumber); break;
     case 0x07: addNumToVx(registerX, twoDigitNumber); break;
-    case 0x08:
-    {
-        char* operand = "<op>";
-        switch(instruction & 0x000f)
-        {
-        case 0x0000: operand = ":="; break;
-        case 0x0001: operand = "|="; break;
-        case 0x0002: operand = "&="; break;
-        case 0x0003: operand = "^="; break;
-        case 0x0004: operand = "+="; break;
-        case 0x0005: operand = "-="; break;
-        case 0x0006: operand = ">>="; break;
-        case 0x0007: operand = "=-"; break;
-        case 0x000e: operand = "<<="; break;
-        default: printf("Invalid opcode "); break;
-        }
-        doVxVyOperation(registerX, registerY, operand);
-        break;
-    }
+    case 0x08: doVxVyOperation(registerX, registerY, instruction); break;
     case 0x09: ifVyNotEqualThenSkip(registerX, registerY); break;
     case 0x0a: setAddressRegister(address); break;
     case 0x0b: jumpToAddrPlusV0(address); break;
@@ -393,12 +375,79 @@ void addNumToVx(uint8_t vx, uint8_t num)
     currentInstruction+=2;
 }
 
-void doVxVyOperation(uint8_t vx, uint8_t vy, char *operand)
+void doVxVyOperation(uint8_t vx, uint8_t vy, uint16_t instruction)
 {
-    // TODO implement
-    printf("v%x %s v%x\n", vx, operand, vy);
+    char* operand = "<op>";
+    switch(instruction & 0x000f)
+    {
+        case 0x0000:
+            operand = ":=";
+            chip8Mem.genPurposeRegisters[vx] = chip8Mem.genPurposeRegisters[vy];
+            break;
+        case 0x0001:
+            operand = "|=";
+            chip8Mem.genPurposeRegisters[vx] = chip8Mem.genPurposeRegisters[vx] | chip8Mem.genPurposeRegisters[vy];
+            break;
+        case 0x0002:
+            operand = "&=";
+            chip8Mem.genPurposeRegisters[vx] = chip8Mem.genPurposeRegisters[vx] & chip8Mem.genPurposeRegisters[vy];
+            break;
+        case 0x0003:
+            operand = "^=";
+            chip8Mem.genPurposeRegisters[vx] = chip8Mem.genPurposeRegisters[vx] ^ chip8Mem.genPurposeRegisters[vy];
+            break;
+        case 0x0004:
+            operand = "+=";
+            uint8_t originalVxValue = chip8Mem.genPurposeRegisters[vx];
+            chip8Mem.genPurposeRegisters[vx] = chip8Mem.genPurposeRegisters[vx] + chip8Mem.genPurposeRegisters[vy];
+            if(chip8Mem.genPurposeRegisters[vx] < originalVxValue || chip8Mem.genPurposeRegisters[vx] < chip8Mem.genPurposeRegisters[vy])
+            {
+                chip8Mem.genPurposeRegisters[0xF] = 1;
+            }
+            else
+            {
+                chip8Mem.genPurposeRegisters[0xF] = 0;
+            }
+            break;
+        case 0x0005:
+            operand = "-=";
+            if(chip8Mem.genPurposeRegisters[vx] < chip8Mem.genPurposeRegisters[vy])
+            {
+                chip8Mem.genPurposeRegisters[0xF] = 0;
+            }
+            else
+            {
+                chip8Mem.genPurposeRegisters[0xF] = 1;
+            }
+            chip8Mem.genPurposeRegisters[vx] = chip8Mem.genPurposeRegisters[vx] - chip8Mem.genPurposeRegisters[vy];
+            break;
+        case 0x0006:
+            operand = ">>=";
+            chip8Mem.genPurposeRegisters[0xF] = chip8Mem.genPurposeRegisters[vx] & 0b00000001;
+            chip8Mem.genPurposeRegisters[vx] = chip8Mem.genPurposeRegisters[vx] >> 1;
+            break;
+        case 0x0007:
+            operand = "=-";
+            if(chip8Mem.genPurposeRegisters[vy] < chip8Mem.genPurposeRegisters[vx])
+            {
+                chip8Mem.genPurposeRegisters[0xF] = 0;
+            }
+            else
+            {
+                chip8Mem.genPurposeRegisters[0xF] = 1;
+            }
+            chip8Mem.genPurposeRegisters[vx] = chip8Mem.genPurposeRegisters[vy] - chip8Mem.genPurposeRegisters[vx];
+            break;
+            break;
+        case 0x000e:
+            operand = "<<=";
+            chip8Mem.genPurposeRegisters[0xF] = (chip8Mem.genPurposeRegisters[vx] & 0b10000000) >> 7;
+            chip8Mem.genPurposeRegisters[vx] = chip8Mem.genPurposeRegisters[vx] << 1;
+            break;
+        default: printf("Invalid opcode "); return;
+    }
 
-    printf("**************** TODO implement\n");
+    printf("v%x %s v%x\n", vx, operand, vy);
     currentInstruction+=2;
 }
 
@@ -469,8 +518,7 @@ void waitForKey(uint8_t vx)
     pauseExecutionForKeyInput = 1;
     registerToStoreKeyPress = vx;
 
-    // the value corresponding to the key pressed will be saved in vx in
-    // runProgram()
+    // the value corresponding to the key pressed will be saved in vx in runProgram()
 
     currentInstruction+=2;
 }
@@ -506,7 +554,6 @@ void setAddrToSprite(uint8_t vx)
     chip8Mem.addressRegister = getMemOffset(&chip8Mem.fontData[5 * fontDigit]);
     currentInstruction+=2;
 }
-
 
 void ifKeyNotPressedThenSkip(uint8_t vx)
 {
@@ -573,7 +620,6 @@ void setPixelColor(uint8_t color)
 
 uint8_t getDisplayBitValue(uint8_t x, uint8_t y)
 {
-
     uint8_t indexIntoData = (x / 8) + (y * 8);
     uint8_t shift = 7 - (x % 8);
     return (chip8Mem.display[indexIntoData] >> shift) & 0b00000001;
@@ -636,7 +682,6 @@ uint16_t delayTimerCallback(uint16_t interval, void *param)
     if(chip8Mem.delayTimer > 0)
     {
         chip8Mem.delayTimer--;
-         printf("~~~~~~~~~~~~~~~ delay timer callback\n");
     }
     return interval;
 }

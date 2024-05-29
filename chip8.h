@@ -113,7 +113,7 @@ void returnFromSubroutine();
 void callSubroutine(uint16_t address);
 void addNumToVx(uint8_t vx, uint8_t num);
 
-void doVxVyOperation(uint8_t vx, uint8_t vy, char* operand);
+void doVxVyOperation(uint8_t vx, uint8_t vy, uint16_t instruction);
 
 /**
  * @brief Jumps to the passed in address plus the value of V0 (a gen purpose
