@@ -332,19 +332,19 @@ void runProgram()
 void returnFromSubroutine()
 {
     // TODO implement
-    printf("**************** TODO implement\n");
-    currentInstruction = chip8Mem.stack[0] += 2; // TODO set based on top of stack and not 0
+    printf("return from subroutine\n");
+
+    stackPointer -= 1;
+    currentInstruction = stack[stackPointer] += 2;
 }
 
 void callSubroutine(uint16_t address)
 {
     printf("call subroutine at %X\n", address);
 
-    // TODO implement
-    printf("**************** TODO implement\n");
+    stack[stackPointer] = currentInstruction;
+    stackPointer += 1;
 
-    // todo should adding to the stack instead of always index 0
-    chip8Mem.stack[0] = currentInstruction;
     currentInstruction = address;
 }
 
