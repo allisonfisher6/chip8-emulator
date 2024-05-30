@@ -334,16 +334,16 @@ void returnFromSubroutine()
     // TODO implement
     printf("return from subroutine\n");
 
-    stackPointer -= 1;
-    currentInstruction = stack[stackPointer] += 2;
+    chip8Mem.stackPointer -= 1;
+    currentInstruction = chip8Mem.stack[chip8Mem.stackPointer] += 2;
 }
 
 void callSubroutine(uint16_t address)
 {
     printf("call subroutine at %X\n", address);
 
-    stack[stackPointer] = currentInstruction;
-    stackPointer += 1;
+    chip8Mem.stack[chip8Mem.stackPointer] = currentInstruction;
+    chip8Mem.stackPointer += 1;
 
     currentInstruction = address;
 }
