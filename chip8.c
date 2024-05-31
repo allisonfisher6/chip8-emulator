@@ -119,7 +119,7 @@ void parseOpcode(uint16_t instruction)
 {
     switch(instruction)
     {
-    case 0x00e0: printf("%X clear\n", instruction); clearDisplay(); break;
+    case 0x00e0: printf("%X clear\n", instruction); clearDisplay(); currentInstruction+=2; break;
     case 0x00ee: printf("%X return\n", instruction); returnFromSubroutine(); break;
     default: parseVariableOpcode(instruction);
     }
@@ -331,7 +331,6 @@ void runProgram()
 
 void returnFromSubroutine()
 {
-    // TODO implement
     printf("return from subroutine\n");
 
     chip8Mem.stackPointer -= 1;
@@ -474,25 +473,62 @@ void setVxRandom(uint8_t vx, uint8_t num)
 
 void bcdVx(uint8_t vx)
 {
+    /*
+     * Stores the binary-coded decimal representation of VX, with the hundreds
+     * digit in memory at location in I, the tens digit at location I+1, and
+     * the ones digit at location I+2.
+     */
+
     printf("bcd v%x\n", vx);
 
-    // TODO implement
+    uint8_t valueAtRegister = chip8Mem.genPurposeRegisters[vx];
+    uint8_t onesDigit = valueAtRegister  % 10;
+    uint8_t tensDigit = (valueAtRegister / 10) % 10;
+    uint8_t hundredsDigit = (valueAtRegister / 100) % 10;
+
+    uint8_t* bcdMemLocation = (uint8_t*) &chip8Mem + chip8Mem.addressRegister;
+    *bcdMemLocation = hundredsDigit;
+    *(bcdMemLocation + 1) = tensDigit;
+    *(bcdMemLocation + 2) = onesDigit;
+
     currentInstruction+=2;
 }
 
 void storeVx(uint8_t vx)
 {
+    /*
+     * Stores from V0 to VX (including VX) in memory, starting at address I. T
+     * the offset from I is increased by 1 for each value written, but I itself
+     * is left unmodified.
+     */
+
     printf("save v%x\n", vx);
 
-    // TODO implement
+    uint8_t* storeMemLocation = (uint8_t*) &chip8Mem + chip8Mem.addressRegister;
+    for(uint8_t vReg = 0; vReg <= vx; vReg++)
+    {
+        *(storeMemLocation + vReg) = chip8Mem.genPurposeRegisters[vReg];
+    }
+
     currentInstruction+=2;
 }
 
 void loadVx(uint8_t vx)
 {
+    /*
+     * Fills from V0 to VX (including VX) with values from memory, starting
+     * at address I. The offset from I is increased by 1 for each value read,
+     * but I itself is left unmodified.
+     */
+
     printf("load v%x\n", vx);
 
-    // TODO implement
+    uint8_t* loadMemLocation = (uint8_t*) &chip8Mem + chip8Mem.addressRegister;
+    for(uint8_t vReg = 0; vReg <= vx; vReg++)
+    {
+        chip8Mem.genPurposeRegisters[vReg] = *(loadMemLocation + vReg);
+    }
+
     currentInstruction+=2;
 }
 
