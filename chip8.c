@@ -284,25 +284,22 @@ void runProgram()
         {
             SDL_KeyboardEvent *keyEvent = &event.key;
             int8_t keyPressed = processKeyPress(keyEvent->keysym.sym, 1);
-
-            if(keyPressed != -1)
-            {
-                if(pauseExecutionForKeyInput)
-                {
-                    // valid keypress registered while waiting for key
-                    chip8Mem.genPurposeRegisters[registerToStoreKeyPress] = keyPressed;
-
-                    // resume processing
-                    pauseExecutionForKeyInput = 0;
-
-                    printf("Resuming processing after keypress %x\n", chip8Mem.genPurposeRegisters[registerToStoreKeyPress]);
-                }
-            }
         }
         else if(event.type == SDL_KEYUP)
         {
             SDL_KeyboardEvent *keyEvent = &event.key;
             int8_t keyPressed = processKeyPress(keyEvent->keysym.sym, 0);
+
+            if(pauseExecutionForKeyInput)
+            {
+                // valid keypress registered while waiting for key
+                chip8Mem.genPurposeRegisters[registerToStoreKeyPress] = keyPressed;
+
+                // resume processing
+                pauseExecutionForKeyInput = 0;
+
+                printf("Resuming processing after keypress %x\n", chip8Mem.genPurposeRegisters[registerToStoreKeyPress]);
+            }
         }
         else if(event.type == SDL_USEREVENT)
         {
@@ -436,14 +433,11 @@ void doVxVyOperation(uint8_t vx, uint8_t vy, uint16_t instruction)
             {
                 chip8Mem.genPurposeRegisters[0xF] = 1;
             }
-
-            break;
             break;
         case 0x000e:
             operand = "<<=";
             chip8Mem.genPurposeRegisters[vx] = chip8Mem.genPurposeRegisters[vx] << 1;
             chip8Mem.genPurposeRegisters[0xF] = (originalVxVal & 0b10000000) >> 7;
-
             break;
         default: printf("Invalid opcode "); return;
     }
