@@ -377,6 +377,7 @@ void addNumToVx(uint8_t vx, uint8_t num)
 void doVxVyOperation(uint8_t vx, uint8_t vy, uint16_t instruction)
 {
     char* operand = "<op>";
+    uint8_t originalVxVal = chip8Mem.genPurposeRegisters[vx];
     switch(instruction & 0x000f)
     {
         case 0x0000:
@@ -397,9 +398,8 @@ void doVxVyOperation(uint8_t vx, uint8_t vy, uint16_t instruction)
             break;
         case 0x0004:
             operand = "+=";
-            uint8_t originalVxValue = chip8Mem.genPurposeRegisters[vx];
             chip8Mem.genPurposeRegisters[vx] = chip8Mem.genPurposeRegisters[vx] + chip8Mem.genPurposeRegisters[vy];
-            if(chip8Mem.genPurposeRegisters[vx] < originalVxValue || chip8Mem.genPurposeRegisters[vx] < chip8Mem.genPurposeRegisters[vy])
+            if(chip8Mem.genPurposeRegisters[vx] < originalVxVal || chip8Mem.genPurposeRegisters[vx] < chip8Mem.genPurposeRegisters[vy])
             {
                 chip8Mem.genPurposeRegisters[0xF] = 1;
             }
@@ -410,9 +410,8 @@ void doVxVyOperation(uint8_t vx, uint8_t vy, uint16_t instruction)
             break;
         case 0x0005:
             operand = "-=";
-            uint8_t originalValue = chip8Mem.genPurposeRegisters[vx];
             chip8Mem.genPurposeRegisters[vx] = chip8Mem.genPurposeRegisters[vx] - chip8Mem.genPurposeRegisters[vy];
-            if(originalValue >= chip8Mem.genPurposeRegisters[vy])
+            if(originalVxVal >= chip8Mem.genPurposeRegisters[vy])
             {
                 chip8Mem.genPurposeRegisters[0xF] = 1;
             }
@@ -423,15 +422,13 @@ void doVxVyOperation(uint8_t vx, uint8_t vy, uint16_t instruction)
             break;
         case 0x0006:
             operand = ">>=";
-            originalValue = chip8Mem.genPurposeRegisters[vx];
             chip8Mem.genPurposeRegisters[vx] = chip8Mem.genPurposeRegisters[vx] >> 1;
-            chip8Mem.genPurposeRegisters[0xF] = originalValue & 0b00000001;
+            chip8Mem.genPurposeRegisters[0xF] = originalVxVal & 0b00000001;
             break;
         case 0x0007:
             operand = "=-";
-            originalValue = chip8Mem.genPurposeRegisters[vx];
             chip8Mem.genPurposeRegisters[vx] = chip8Mem.genPurposeRegisters[vy] - chip8Mem.genPurposeRegisters[vx];
-            if(chip8Mem.genPurposeRegisters[vy] < originalValue)
+            if(chip8Mem.genPurposeRegisters[vy] < originalVxVal)
             {
                 chip8Mem.genPurposeRegisters[0xF] = 0;
             }
@@ -444,9 +441,8 @@ void doVxVyOperation(uint8_t vx, uint8_t vy, uint16_t instruction)
             break;
         case 0x000e:
             operand = "<<=";
-            originalValue = chip8Mem.genPurposeRegisters[vx];
             chip8Mem.genPurposeRegisters[vx] = chip8Mem.genPurposeRegisters[vx] << 1;
-            chip8Mem.genPurposeRegisters[0xF] = (originalValue & 0b10000000) >> 7;
+            chip8Mem.genPurposeRegisters[0xF] = (originalVxVal & 0b10000000) >> 7;
 
             break;
         default: printf("Invalid opcode "); return;
